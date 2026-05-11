@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gravity Experiments with Radio Pulsars · An Interactive Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap">
+<style>
+/* ======= RESET & ROOT ======= */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+:root{
+  --void:#02030a;
+  --deep:#070b1f;
+  --nebula:#0d1230;
+  --plasma:#1a1f4a;
+  --ember:#ff6b35;
+  --gold:#f4c430;
+  --pulsar:#7dd3fc;
+  --magenta:#e94584;
+  --bone:#f5efe0;
+  --dust:#a8a39a;
+  --line:rgba(245,239,224,0.12);
+  --serif:'Cormorant Garamond', serif;
+  --sans:'Space Grotesk', sans-serif;
+  --mono:'JetBrains Mono', monospace;
+}
+body{
+  background:var(--void);
+  color:var(--bone);
+  font-family:var(--sans);
+  font-weight:300;
+  line-height:1.6;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* ======= STARFIELD ======= */
+.starfield{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
+  radial-gradient(ellipse at 15% 30%, rgba(125,211,252,0.08) 0%, transparent 50%),
+  radial-gradient(ellipse at 85% 70%, rgba(233,69,132,0.06) 0%, transparent 50%),
+  radial-gradient(ellipse at 50% 100%, rgba(255,107,53,0.05) 0%, transparent 60%),
+  linear-gradient(180deg, #02030a 0%, #070b1f 50%, #02030a 100%);
+}
+.stars{position:absolute;inset:0;background-image:
+  radial-gradient(1px 1px at 20px 30px, white, transparent),
+  radial-gradient(1px 1px at 60px 80px, white, transparent),
+  radial-gradient(1px 1px at 140px 20px, rgba(255,255,255,0.6), transparent),
+  radial-gradient(2px 2px at 200px 120px, rgba(125,211,252,0.8), transparent),
+  radial-gradient(1px 1px at 280px 40px, white, transparent),
+  radial-gradient(1.5px 1.5px at 320px 200px, rgba(244,196,48,0.6), transparent),
+  radial-gradient(1px 1px at 380px 90px, white, transparent),
+  radial-gradient(1px 1px at 90px 220px, rgba(233,69,132,0.5), transparent),
+  radial-gradient(2px 2px at 450px 160px, white, transparent),
+  radial-gradient(1px 1px at 520px 60px, rgba(255,255,255,0.7), transparent);
+  background-size:600px 300px;
+  animation:drift 200s linear infinite;
+  opacity:0.7;
+}
+.stars::after{content:'';position:absolute;inset:0;background-image:inherit;background-size:inherit;animation:twinkle 4s ease-in-out infinite alternate}
+@keyframes drift{from{background-position:0 0}to{background-position:600px 300px}}
+@keyframes twinkle{from{opacity:0.4}to{opacity:0.9}}
+
+.nebula-glow{position:fixed;inset:-20%;z-index:-1;pointer-events:none;background:
+  radial-gradient(circle at 30% 20%, rgba(125,211,252,0.04) 0%, transparent 40%),
+  radial-gradient(circle at 70% 80%, rgba(255,107,53,0.05) 0%, transparent 45%);
+  filter:blur(40px);animation:slowPulse 20s ease-in-out infinite alternate}
+@keyframes slowPulse{from{opacity:0.6;transform:scale(1)}to{opacity:1;transform:scale(1.05)}}
+
+/* ======= NAVIGATION ======= */
+nav.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:18px 40px;
+  background:rgba(2,3,10,0.6);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.brand{font-family:var(--serif);font-size:1.4rem;font-weight:500;font-style:italic;letter-spacing:0.02em}
+.brand .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pulsar);margin-right:10px;box-shadow:0 0 12px var(--pulsar);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:0.6}}
+.nav-links{display:flex;gap:28px;list-style:none;font-size:0.78rem;letter-spacing:0.18em;text-transform:uppercase}
+.nav-links a{color:var(--dust);text-decoration:none;transition:color 0.3s;position:relative;font-weight:400}
+.nav-links a:hover{color:var(--bone)}
+.nav-links a::before{content:attr(data-num);font-family:var(--mono);font-size:0.65rem;color:var(--ember);margin-right:6px;opacity:0.7}
+@media(max-width:900px){.nav-links{display:none}nav.topbar{padding:14px 20px}}
+
+/* ======= HERO ======= */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:120px 8vw 80px;
+  position:relative;
+  overflow:hidden;
+}
+.hero-video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;z-index:0;opacity:0.35;
+  filter:hue-rotate(-20deg) saturate(1.2);
+}
+.hero-overlay{position:absolute;inset:0;background:
+  linear-gradient(180deg, rgba(2,3,10,0.4) 0%, rgba(2,3,10,0.7) 60%, rgba(2,3,10,0.95) 100%),
+  radial-gradient(ellipse at center, transparent 30%, rgba(2,3,10,0.6) 80%);
+  z-index:1}
+.hero-content{position:relative;z-index:2;max-width:1200px}
+.eyebrow{
+  font-family:var(--mono);font-size:0.72rem;letter-spacing:0.4em;text-transform:uppercase;
+  color:var(--ember);margin-bottom:32px;display:flex;align-items:center;gap:14px;
+}
+.eyebrow::before{content:'';width:40px;height:1px;background:var(--ember)}
+.hero h1{
+  font-family:var(--serif);
+  font-size:clamp(3rem, 8.5vw, 8rem);
+  font-weight:300;line-height:0.95;letter-spacing:-0.02em;
+  margin-bottom:32px;
+}
+.hero h1 .it{font-style:italic;color:var(--pulsar);font-weight:400}
+.hero h1 .em{color:var(--gold);font-weight:500}
+.hero-sub{
+  font-family:var(--serif);
+  font-size:clamp(1.2rem, 2vw, 1.6rem);
+  font-weight:300;font-style:italic;
+  color:var(--dust);max-width:760px;margin-bottom:48px;line-height:1.5;
+}
+.hero-meta{
+  display:flex;gap:48px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:0.78rem;letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--dust);padding-top:32px;border-top:1px solid var(--line);max-width:900px;
+}
+.hero-meta div span{display:block;color:var(--bone);font-size:1.5rem;font-family:var(--serif);font-style:italic;margin-bottom:4px;letter-spacing:normal;text-transform:none}
+.scroll-cue{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:3;
+  font-family:var(--mono);font-size:0.7rem;letter-spacing:0.3em;color:var(--dust);text-align:center}
+.scroll-cue::after{content:'';display:block;width:1px;height:40px;background:linear-gradient(180deg,var(--dust),transparent);margin:12px auto 0;animation:scrollPulse 2s ease-in-out infinite}
+@keyframes scrollPulse{0%,100%{transform:scaleY(1);opacity:0.5}50%{transform:scaleY(1.3);opacity:1}}
+
+/* ======= SECTION FRAMEWORK ======= */
+section.chapter{padding:140px 8vw;position:relative;max-width:1600px;margin:0 auto}
+.chapter-tag{
+  font-family:var(--mono);font-size:0.7rem;letter-spacing:0.4em;text-transform:uppercase;
+  color:var(--ember);margin-bottom:20px;display:flex;align-items:center;gap:14px
+}
+.chapter-tag::before{content:attr(data-num);color:var(--gold);font-size:0.85rem}
+.chapter-title{
+  font-family:var(--serif);font-weight:300;
+  font-size:clamp(2.5rem, 6vw, 5rem);
+  line-height:1;letter-spacing:-0.02em;margin-bottom:24px;
+}
+.chapter-title .accent{font-style:italic;color:var(--pulsar)}
+.chapter-lead{
+  font-family:var(--serif);font-size:1.4rem;font-style:italic;font-weight:300;
+  color:var(--dust);max-width:780px;margin-bottom:64px;line-height:1.5
+}
+
+/* ======= ABSTRACT / SUMMARY ======= */
+.abstract-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+@media(max-width:900px){.abstract-grid{grid-template-columns:1fr;gap:48px}}
+.abstract-text p{margin-bottom:20px;color:#e8e2d3;font-size:1.02rem;font-weight:300}
+.abstract-text p:first-child::first-letter{
+  font-family:var(--serif);font-size:5rem;float:left;line-height:0.85;
+  padding:6px 14px 0 0;color:var(--gold);font-style:italic;font-weight:400
+}
+.key-stats{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--line)}
+.stat{background:var(--deep);padding:32px 24px;transition:background 0.4s}
+.stat:hover{background:var(--nebula)}
+.stat-value{font-family:var(--serif);font-style:italic;font-size:2.4rem;font-weight:400;color:var(--gold);line-height:1;margin-bottom:8px}
+.stat-label{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dust)}
+.stat-desc{font-size:0.88rem;color:#c8c2b3;margin-top:10px;line-height:1.5}
+
+/* ======= CONCEPT MAP ======= */
+.concept-map{
+  margin-top:64px;padding:48px;background:linear-gradient(135deg,rgba(13,18,48,0.6),rgba(7,11,31,0.4));
+  border:1px solid var(--line);position:relative;overflow:hidden
+}
+.concept-map::before{content:'';position:absolute;top:0;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--pulsar),transparent)}
+.concept-title{font-family:var(--serif);font-size:1.6rem;font-style:italic;margin-bottom:32px;color:var(--bone)}
+.concept-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px}
+.concept-node{
+  padding:24px;background:rgba(2,3,10,0.5);border:1px solid var(--line);
+  transition:all 0.4s;position:relative;cursor:pointer;
+}
+.concept-node:hover{border-color:var(--pulsar);transform:translateY(-4px);box-shadow:0 12px 40px rgba(125,211,252,0.1)}
+.concept-node h4{font-family:var(--mono);font-size:0.75rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--ember);margin-bottom:10px}
+.concept-node p{font-size:0.92rem;color:#d4cebd;line-height:1.55}
+.concept-node .more-hint{
+  position:absolute;top:14px;right:14px;
+  font-family:var(--mono);font-size:0.7rem;color:var(--pulsar);opacity:0.5;
+  transition:opacity 0.3s, transform 0.3s
+}
+.concept-node:hover .more-hint{opacity:1}
+.concept-node.open{background:rgba(13,18,48,0.85);border-color:var(--pulsar);grid-column:1/-1}
+.concept-node.open .more-hint{transform:rotate(45deg);opacity:1}
+.concept-detail{
+  max-height:0;overflow:hidden;transition:max-height 0.5s ease, margin-top 0.4s ease;
+  font-size:0.95rem;color:#d4cebd;line-height:1.7;
+}
+.concept-node.open .concept-detail{max-height:600px;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
+.concept-detail .formula-mini{
+  font-family:var(--mono);font-size:0.85rem;background:rgba(125,211,252,0.06);
+  border-left:2px solid var(--pulsar);padding:10px 14px;margin:12px 0;color:var(--bone);
+}
+
+/* ======= TIMELINE ======= */
+.timeline{position:relative;padding-left:0;margin-top:48px}
+.timeline::before{content:'';position:absolute;left:120px;top:0;bottom:0;width:1px;background:linear-gradient(180deg,transparent,var(--pulsar) 10%,var(--ember) 50%,var(--gold) 90%,transparent)}
+@media(max-width:700px){.timeline::before{left:60px}}
+.tl-item{position:relative;padding-left:180px;padding-bottom:56px;display:grid;grid-template-columns:1fr;gap:8px}
+@media(max-width:700px){.tl-item{padding-left:90px}}
+.tl-year{
+  position:absolute;left:0;top:-6px;width:100px;text-align:right;
+  font-family:var(--serif);font-style:italic;font-size:2rem;color:var(--gold);font-weight:400
+}
+@media(max-width:700px){.tl-year{width:50px;font-size:1.4rem}}
+.tl-dot{position:absolute;left:115px;top:14px;width:12px;height:12px;border-radius:50%;
+  background:var(--bone);box-shadow:0 0 0 4px var(--void),0 0 16px var(--pulsar);z-index:2}
+@media(max-width:700px){.tl-dot{left:55px}}
+.tl-title{font-family:var(--serif);font-size:1.5rem;font-weight:500;color:var(--bone);line-height:1.2}
+.tl-body{font-size:0.95rem;color:#c8c2b3;max-width:680px;line-height:1.6}
+.tl-tag{display:inline-block;font-family:var(--mono);font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;
+  padding:3px 10px;border:1px solid var(--line);color:var(--ember);margin-top:8px;border-radius:2px}
+
+/* ======= PEOPLE / WHO ======= */
+.who-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2px;background:var(--line);margin-top:48px}
+.person-card{background:var(--deep);padding:36px 28px;transition:all 0.4s;position:relative;overflow:hidden;cursor:pointer}
+.person-card::before{content:'';position:absolute;top:0;left:0;width:0;height:2px;background:var(--ember);transition:width 0.5s}
+.person-card:hover::before{width:100%}
+.person-card:hover{background:var(--nebula)}
+.person-card .more-hint{
+  position:absolute;top:18px;right:20px;
+  font-family:var(--mono);font-size:0.7rem;color:var(--ember);opacity:0.4;transition:opacity 0.3s;
+  letter-spacing:0.2em
+}
+.person-card:hover .more-hint{opacity:1}
+.person-role{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--ember);margin-bottom:12px}
+.person-name{font-family:var(--serif);font-size:1.5rem;font-weight:500;margin-bottom:4px;color:var(--bone)}
+.person-when{font-family:var(--mono);font-size:0.78rem;color:var(--dust);margin-bottom:16px;letter-spacing:0.05em}
+.person-contrib{font-size:0.92rem;color:#d4cebd;line-height:1.55}
+
+/* ======= METHODS / HOW ======= */
+.method-block{display:grid;grid-template-columns:240px 1fr;gap:48px;padding:56px 0;border-top:1px solid var(--line)}
+.method-block:last-child{border-bottom:1px solid var(--line)}
+@media(max-width:800px){.method-block{grid-template-columns:1fr;gap:20px}}
+.method-num{font-family:var(--serif);font-style:italic;font-size:4rem;color:var(--gold);font-weight:400;line-height:1}
+.method-name{font-family:var(--mono);font-size:0.78rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--dust);margin-top:8px}
+.method-content h3{font-family:var(--serif);font-size:2rem;font-weight:400;margin-bottom:16px;line-height:1.15}
+.method-content h3 em{color:var(--pulsar);font-weight:500}
+.method-content p{font-size:1rem;color:#d4cebd;margin-bottom:14px;line-height:1.65;max-width:760px}
+.method-content .formula{
+  font-family:var(--mono);font-size:0.92rem;background:rgba(125,211,252,0.06);
+  border-left:2px solid var(--pulsar);padding:14px 20px;margin:18px 0;color:var(--bone);max-width:680px;
+  font-weight:400
+}
+
+/* ======= MASS-MASS DIAGRAM ======= */
+.diagram-wrap{margin-top:64px;display:grid;grid-template-columns:1fr 360px;gap:48px;align-items:start}
+@media(max-width:1000px){.diagram-wrap{grid-template-columns:1fr}}
+.diagram-card{background:rgba(7,11,31,0.5);border:1px solid var(--line);padding:32px}
+.diagram-title{font-family:var(--serif);font-size:1.3rem;font-style:italic;margin-bottom:20px;color:var(--bone)}
+.diagram-legend{font-size:0.88rem;color:#c8c2b3;line-height:1.7}
+.diagram-legend .lk{display:inline-block;width:18px;height:3px;vertical-align:middle;margin-right:8px}
+.diagram-legend ul{list-style:none;padding:0}
+.diagram-legend li{padding:8px 0;border-bottom:1px solid var(--line)}
+.diagram-legend li:last-child{border:none}
+
+/* ======= LOCATIONS / WHERE ======= */
+.loc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;margin-top:48px}
+.loc-card{
+  background:linear-gradient(180deg,rgba(13,18,48,0.5),rgba(7,11,31,0.3));
+  border:1px solid var(--line);padding:28px;position:relative;
+}
+.loc-emoji{display:none}
+.loc-icon{
+  width:44px;height:44px;border:1px solid var(--gold);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;font-family:var(--mono);font-size:0.9rem;color:var(--gold)
+}
+.loc-name{font-family:var(--serif);font-size:1.3rem;font-weight:500;margin-bottom:6px;color:var(--bone)}
+.loc-place{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--ember);margin-bottom:14px}
+.loc-desc{font-size:0.9rem;color:#c8c2b3;line-height:1.55}
+
+/* ======= TESTS / RESULTS ======= */
+.tests-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:32px;margin-top:48px}
+.test-card{
+  background:rgba(7,11,31,0.5);border:1px solid var(--line);padding:36px 32px;
+  position:relative;transition:all 0.4s;cursor:pointer
+}
+.test-card::before{content:'';position:absolute;top:0;left:32px;right:32px;height:1px;background:linear-gradient(90deg,var(--ember),transparent)}
+.test-card:hover{background:rgba(13,18,48,0.7);transform:translateY(-3px);border-color:var(--ember)}
+.test-card .more-hint{
+  position:absolute;bottom:18px;right:24px;
+  font-family:var(--mono);font-size:0.7rem;color:var(--ember);opacity:0.5;
+  letter-spacing:0.2em;transition:opacity 0.3s,transform 0.3s
+}
+.test-card:hover .more-hint{opacity:1;transform:translateX(4px)}
+.test-name{font-family:var(--serif);font-size:1.4rem;font-style:italic;color:var(--bone);margin-bottom:6px}
+.test-pulsar{font-family:var(--mono);font-size:0.78rem;color:var(--pulsar);letter-spacing:0.08em;margin-bottom:18px}
+.test-result{font-size:0.95rem;color:#d4cebd;line-height:1.6;margin-bottom:14px}
+.test-precision{
+  display:inline-block;font-family:var(--mono);font-size:0.78rem;
+  padding:6px 12px;background:rgba(244,196,48,0.1);border:1px solid var(--gold);
+  color:var(--gold);margin-top:8px;letter-spacing:0.05em
+}
+
+/* ======= MODAL ======= */
+.modal-overlay{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(2,3,10,0.85);backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  display:flex;align-items:center;justify-content:center;padding:40px 20px;
+  opacity:0;pointer-events:none;transition:opacity 0.35s ease
+}
+.modal-overlay.open{opacity:1;pointer-events:auto}
+.modal{
+  background:linear-gradient(180deg,rgba(13,18,48,0.95),rgba(7,11,31,0.95));
+  border:1px solid var(--line);max-width:760px;width:100%;
+  max-height:88vh;overflow-y:auto;padding:48px 56px;
+  position:relative;
+  transform:translateY(20px) scale(0.98);transition:transform 0.4s ease;
+  box-shadow:0 40px 100px rgba(0,0,0,0.6),0 0 60px rgba(125,211,252,0.06)
+}
+.modal-overlay.open .modal{transform:none}
+@media(max-width:700px){.modal{padding:36px 28px}}
+.modal-close{
+  position:absolute;top:20px;right:20px;width:36px;height:36px;
+  border:1px solid var(--line);background:transparent;color:var(--bone);
+  cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;
+  transition:all 0.3s;font-family:var(--mono)
+}
+.modal-close:hover{border-color:var(--ember);color:var(--ember);transform:rotate(90deg)}
+.modal-tag{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--ember);margin-bottom:14px}
+.modal h3{font-family:var(--serif);font-size:2.2rem;font-weight:400;line-height:1.1;margin-bottom:6px;color:var(--bone)}
+.modal h3 em{color:var(--pulsar);font-style:italic}
+.modal .modal-sub{font-family:var(--mono);font-size:0.85rem;color:var(--pulsar);margin-bottom:28px;letter-spacing:0.06em}
+.modal h4{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin:28px 0 12px}
+.modal p{font-size:1rem;color:#d4cebd;line-height:1.7;margin-bottom:14px}
+.modal p em{color:var(--pulsar);font-style:italic}
+.modal .params-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--line);margin:18px 0}
+.modal .param{background:rgba(2,3,10,0.6);padding:14px 18px}
+.modal .param-label{font-family:var(--mono);font-size:0.7rem;color:var(--dust);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px}
+.modal .param-value{font-family:var(--serif);font-size:1.2rem;font-style:italic;color:var(--bone)}
+.modal ul.tests-list{list-style:none;padding:0;margin:14px 0}
+.modal ul.tests-list li{padding:10px 0 10px 22px;border-bottom:1px solid var(--line);font-size:0.95rem;color:#d4cebd;line-height:1.55;position:relative}
+.modal ul.tests-list li::before{content:'◆';position:absolute;left:0;top:11px;color:var(--ember);font-size:0.55rem}
+.modal ul.tests-list li:last-child{border-bottom:none}
+
+/* ======= PHILOSOPHY / WHY ======= */
+.why-content{
+  max-width:880px;margin:0 auto;
+  font-family:var(--serif);font-size:1.35rem;line-height:1.65;color:#e8e2d3;font-weight:300
+}
+.why-content p{margin-bottom:28px}
+.why-content p:first-of-type{font-size:1.6rem;font-style:italic;color:var(--bone)}
+.why-content em{color:var(--gold);font-style:italic}
+.future-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:2px;background:var(--line);margin-top:64px}
+.future-item{background:var(--deep);padding:32px 28px}
+.future-num{font-family:var(--mono);font-size:0.7rem;color:var(--ember);letter-spacing:0.2em;margin-bottom:14px}
+.future-title{font-family:var(--serif);font-size:1.3rem;font-weight:500;margin-bottom:12px;color:var(--bone)}
+.future-text{font-size:0.92rem;color:#c8c2b3;line-height:1.6}
+
+/* ======= MIND MAP ======= */
+.mindmap-section{padding:120px 8vw;text-align:center;position:relative}
+.mindmap-frame{
+  position:relative;display:inline-block;max-width:100%;
+  padding:8px;background:linear-gradient(135deg,rgba(125,211,252,0.2),rgba(255,107,53,0.2),rgba(244,196,48,0.2));
+  border-radius:2px;
+}
+.mindmap-frame::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(125,211,252,0.15),transparent 70%);filter:blur(40px);z-index:-1}
+.mindmap-section img{max-width:100%;height:auto;background:var(--deep);padding:32px;display:block;box-shadow:0 30px 80px rgba(0,0,0,0.6)}
+.mindmap-cap{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--dust);margin-top:24px}
+
+/* ======= STOCHASTIC GW VIDEO SECTION ======= */
+.gwbg-section{
+  padding:140px 8vw;max-width:1600px;margin:0 auto;position:relative;
+}
+.gwbg-section::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 80% 50%,rgba(125,211,252,0.06),transparent 60%);
+  pointer-events:none}
+.gwbg-inner{
+  display:grid;grid-template-columns:1fr 1.1fr;gap:80px;align-items:center;position:relative
+}
+@media(max-width:1000px){.gwbg-inner{grid-template-columns:1fr;gap:48px}}
+.gwbg-video{
+  position:relative;border:1px solid var(--line);background:var(--void);
+  overflow:hidden;aspect-ratio:16/9;
+  box-shadow:0 30px 100px rgba(0,0,0,0.6),0 0 60px rgba(125,211,252,0.08)
+}
+.gwbg-video::before{content:'';position:absolute;inset:0;border:1px solid rgba(125,211,252,0.25);z-index:2;pointer-events:none}
+.gwbg-video video{width:100%;height:100%;object-fit:cover;display:block}
+.gwbg-video::after{
+  content:'';position:absolute;top:14px;left:14px;width:8px;height:8px;border-radius:50%;
+  background:var(--ember);box-shadow:0 0 10px var(--ember);z-index:3;
+  animation:pulse 2s ease-in-out infinite
+}
+.gwbg-caption{
+  position:absolute;bottom:14px;left:14px;right:14px;z-index:3;
+  font-family:var(--mono);font-size:0.68rem;letter-spacing:0.25em;text-transform:uppercase;
+  color:var(--bone);background:linear-gradient(180deg,transparent,rgba(2,3,10,0.8));padding:24px 8px 4px
+}
+
+/* ======= AUDIO BLOCK ======= */
+.audio-block{
+  margin-top:36px;padding:28px;
+  background:linear-gradient(135deg,rgba(125,211,252,0.08),rgba(233,69,132,0.05));
+  border:1px solid rgba(125,211,252,0.2);
+  border-radius:2px;position:relative;overflow:hidden;
+  max-width:620px;
+}
+.audio-block::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--pulsar),var(--ember),var(--gold),transparent);
+  opacity:0.6
+}
+.audio-block::after{
+  content:'';position:absolute;top:-50%;right:-20%;width:200px;height:200px;
+  background:radial-gradient(circle,rgba(125,211,252,0.15),transparent 70%);
+  filter:blur(30px);pointer-events:none
+}
+.audio-meta{margin-bottom:18px;position:relative;z-index:1}
+.audio-tag{
+  font-family:var(--mono);font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:10px
+}
+.audio-title{
+  font-family:var(--serif);font-size:1.5rem;font-weight:400;color:var(--bone);
+  line-height:1.2;margin-bottom:8px
+}
+.audio-title em{color:var(--pulsar);font-style:italic}
+.audio-sub{font-size:0.88rem;color:#c8c2b3;line-height:1.5}
+.audio-player{
+  width:100%;height:44px;margin-top:6px;
+  border-radius:2px;
+  filter:invert(0.9) hue-rotate(180deg) saturate(0.5);
+  position:relative;z-index:1
+}
+.audio-player::-webkit-media-controls-panel{
+  background:rgba(7,11,31,0.9)
+}
+
+/* ======= RESOURCE TAG ======= */
+.resource-tag{
+  font-family:var(--mono);font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:18px;display:inline-flex;align-items:center;gap:10px
+}
+.resource-tag::before{content:'◆';color:var(--ember);font-size:0.6rem}
+
+/* ======= SLIDE DECK GALLERY ======= */
+.deck-section{padding:140px 8vw;position:relative;max-width:1600px;margin:0 auto}
+.deck-intro{max-width:780px;margin-bottom:56px}
+.deck-intro p{font-size:1.02rem;color:#d4cebd;line-height:1.75;margin-top:14px}
+.deck-meta{
+  display:flex;flex-wrap:wrap;gap:32px;margin-top:24px;
+  font-family:var(--mono);font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--dust)
+}
+.deck-meta span strong{color:var(--gold);font-weight:500;letter-spacing:0.18em}
+.deck-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:18px
+}
+.slide-card{
+  position:relative;cursor:pointer;overflow:hidden;
+  background:var(--deep);border:1px solid var(--line);
+  transition:transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  aspect-ratio:16/9
+}
+.slide-card:hover{
+  transform:translateY(-4px);border-color:rgba(125,211,252,0.4);
+  box-shadow:0 18px 40px rgba(0,0,0,0.5)
+}
+.slide-card img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform 0.6s ease
+}
+.slide-card:hover img{transform:scale(1.04)}
+.slide-card-num{
+  position:absolute;top:10px;left:10px;
+  font-family:var(--mono);font-size:0.65rem;letter-spacing:0.2em;
+  color:var(--bone);background:rgba(2,3,10,0.75);
+  padding:5px 9px;border:1px solid rgba(244,196,48,0.3);
+  z-index:2
+}
+.slide-card-caption{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:14px 14px 12px;
+  background:linear-gradient(180deg,transparent,rgba(2,3,10,0.92));
+  font-family:var(--serif);font-size:0.95rem;color:var(--bone);
+  line-height:1.3;z-index:1
+}
+@media(max-width:600px){
+  .deck-grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .slide-card-caption{font-size:0.82rem;padding:10px}
+}
+
+/* lightbox */
+.deck-lightbox{
+  position:fixed;inset:0;background:rgba(2,3,10,0.96);
+  display:none;align-items:center;justify-content:center;
+  z-index:200;padding:40px;
+  backdrop-filter:blur(8px)
+}
+.deck-lightbox.open{display:flex}
+.deck-lightbox-img{
+  max-width:min(95vw,1500px);max-height:85vh;
+  box-shadow:0 30px 80px rgba(0,0,0,0.6);
+  display:block
+}
+.deck-lightbox-info{
+  position:absolute;left:0;right:0;bottom:24px;
+  text-align:center;
+  font-family:var(--mono);font-size:0.72rem;letter-spacing:0.25em;
+  color:var(--dust);text-transform:uppercase
+}
+.deck-lightbox-info strong{color:var(--gold);font-weight:500;margin-right:14px}
+.deck-nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:54px;height:54px;border-radius:50%;
+  background:rgba(13,18,48,0.6);border:1px solid rgba(245,239,224,0.2);
+  color:var(--bone);font-size:1.4rem;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.3s ease;
+  font-family:var(--serif)
+}
+.deck-nav:hover{background:rgba(125,211,252,0.15);border-color:var(--pulsar);color:var(--pulsar)}
+.deck-nav.prev{left:24px}
+.deck-nav.next{right:24px}
+.deck-close{
+  position:absolute;top:24px;right:24px;
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(13,18,48,0.6);border:1px solid rgba(245,239,224,0.2);
+  color:var(--bone);font-size:1.5rem;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.3s ease
+}
+.deck-close:hover{background:rgba(233,69,132,0.15);border-color:var(--magenta);color:var(--magenta)}
+@media(max-width:600px){
+  .deck-lightbox{padding:20px}
+  .deck-nav{width:40px;height:40px;font-size:1.1rem}
+  .deck-nav.prev{left:8px}
+  .deck-nav.next{right:8px}
+}
+
+/* ======= SOURCES ======= */
+.sources{background:rgba(2,3,10,0.7);border-top:1px solid var(--line);padding:80px 8vw}
+.sources h3{font-family:var(--serif);font-size:1.8rem;font-style:italic;margin-bottom:32px;color:var(--bone)}
+.source-card{
+  padding:24px;border:1px solid var(--line);background:rgba(13,18,48,0.3);
+  font-family:var(--mono);font-size:0.85rem;color:#c8c2b3;line-height:1.7
+}
+.source-card .stitle{font-family:var(--serif);font-style:italic;font-size:1.4rem;color:var(--gold);margin-bottom:8px;font-weight:500}
+.source-card .sauthors{color:var(--pulsar);margin-bottom:6px}
+.source-card .sjournal{font-size:0.78rem;color:var(--dust)}
+
+/* ======= FOOTER ======= */
+footer{padding:60px 8vw 40px;text-align:center;border-top:1px solid var(--line);background:var(--void)}
+footer p{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dust)}
+footer .quote{font-family:var(--serif);font-style:italic;font-size:1.3rem;color:var(--bone);margin-bottom:24px;letter-spacing:normal;text-transform:none;font-weight:300;max-width:680px;margin-left:auto;margin-right:auto}
+
+/* ======= REVEAL ANIMATION ======= */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.9s ease, transform 0.9s ease}
+.reveal.in{opacity:1;transform:none}
+
+/* infographic */
+.infographic-wrap{margin-top:64px;text-align:center}
+.infographic-wrap img{max-width:100%;height:auto;border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,0.4)}
+.infographic-cap{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--dust);margin-top:20px}
+
+/* divider */
+.divider{display:flex;align-items:center;gap:20px;margin:80px 0 40px;color:var(--ember);font-family:var(--mono);font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent)}
+</style>
+</head>
+<body>
+
+<div class="starfield"><div class="stars"></div></div>
+<div class="nebula-glow"></div>
+
+<!-- ======= NAV ======= -->
+<nav class="topbar">
+  <div class="brand"><span class="dot"></span>Pulsar Gravity Lab</div>
+  <ul class="nav-links">
+    <li><a href="#what" data-num="01">What</a></li>
+    <li><a href="#when" data-num="02">When</a></li>
+    <li><a href="#who" data-num="03">Who</a></li>
+    <li><a href="#how" data-num="04">How</a></li>
+    <li><a href="#where" data-num="05">Where</a></li>
+    <li><a href="#why" data-num="06">Why</a></li>
+  </ul>
+</nav>
+
+<!-- ======= HERO ======= -->
+<header class="hero">
+  <video class="hero-video" autoplay muted loop playsinline>
+    <source src="https://res.cloudinary.com/dpbjs58ci/video/upload/q_auto/f_auto/v1777881405/Fondo_Estoc%C3%A1stico_de_Ondas_d1x8cx.mp4" type="video/mp4">
+  </video>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div class="eyebrow">An interactive review · 50 years of binary pulsars</div>
+    <h1>Gravity, <span class="it">measured</span><br>at the edge of <span class="em">spacetime</span>.</h1>
+    <p class="hero-sub">Half a century after the discovery of the Hulse–Taylor pulsar, radio pulsars remain the most precise laboratories ever built for testing General Relativity in the strong-field regime. This is the story of how dead stars became the universe's most accurate clocks.</p>
+    <div class="hero-meta">
+      <div><span>3473</span>known pulsars</div>
+      <div><span>~6×10⁻⁵</span>relative precision (Double Pulsar)</div>
+      <div><span>150 000</span>lower limit on Brans–Dicke ω</div>
+      <div><span>50 yr</span>since PSR B1913+16</div>
+    </div>
+  </div>
+  <div class="scroll-cue">SCROLL · INVESTIGATE</div>
+</header>
+
+<!-- ======= WHAT ======= -->
+<section class="chapter" id="what">
+  <div class="chapter-tag" data-num="01 —">What is being investigated</div>
+  <h2 class="chapter-title">A clock spinning on a <span class="accent">dead star.</span></h2>
+  <p class="chapter-lead">A pulsar is a rapidly rotating neutron star whose lighthouse-like beam of radio emission, sweeping past Earth, produces astonishingly stable periodic pulses. When such a pulsar orbits another compact body, the timing of those pulses becomes a direct probe of gravity.</p>
+
+  <div class="abstract-grid">
+    <div class="abstract-text reveal">
+      <p>The central problem is conceptually simple: General Relativity describes how mass curves spacetime, but for over half a century its predictions could only be tested in the slow, weak-field arena of the Solar System. Then, in the summer of 1974, Hulse and Taylor discovered the first binary pulsar — and an entirely new regime of experimental gravity opened up.</p>
+      <p>Binary pulsars allow physicists to study two strongly self-gravitating bodies — neutron stars whose internal gravitational binding energy is comparable to their rest-mass energy — orbiting each other in spacetimes very different from Minkowski. Pulse arrival times are recorded with microsecond precision, and from them one extracts a small set of "post-Keplerian" parameters that quantify relativistic deviations from Newtonian motion.</p>
+      <p>Each measured post-Keplerian parameter draws a curve in a mass–mass diagram. If the theory of gravity is correct, every curve must intersect at one common pair of masses. General Relativity has passed every such test ever performed, in some cases at the level of a few parts in a hundred thousand.</p>
+      <p>Pulsar laboratories also constrain alternative theories that predict effects absent in GR — dipolar gravitational waves, violations of the universality of free fall for self-gravitating bodies, time variation of Newton's constant, preferred-frame and preferred-location effects. So far, every attempted falsification has confirmed Einstein's theory.</p>
+    </div>
+
+    <div class="key-stats reveal">
+      <div class="stat">
+        <div class="stat-value">~12 km</div>
+        <div class="stat-label">NS radius</div>
+        <div class="stat-desc">A mass comparable to the Sun's, compressed into the size of a city.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">10²⁵ K</div>
+        <div class="stat-label">Brightness temp.</div>
+        <div class="stat-desc">Required if pulsar emission were thermal — proof of coherent radiation.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">0.1 µs</div>
+        <div class="stat-label">Best timing</div>
+        <div class="stat-desc">Time-of-arrival precision achieved on PSR J1909−3744.</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">~5 PN</div>
+        <div class="stat-label">Strong field</div>
+        <div class="stat-desc">Pulsar tests probe orders of post-Newtonian gravity unreachable in the Solar System.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="concept-map reveal">
+    <h3 class="concept-title">Conceptual scheme — the chain of inference  <span style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.2em;color:var(--dust);text-transform:uppercase;margin-left:14px">click any node to expand</span></h3>
+    <div class="concept-grid">
+      <div class="concept-node" data-concept="lighthouse">
+        <span class="more-hint">+</span>
+        <h4>Lighthouse model</h4>
+        <p>A misaligned magnetic axis sweeps a beam of coherent radio emission past Earth once per rotation, producing the characteristic pulses.</p>
+        <div class="concept-detail">
+          <p>The pulsar is a magnetised neutron star whose magnetic axis is generally misaligned with its rotation axis. Radio emission emerges anisotropically from regions near the open magnetic field lines around the magnetic poles. Distant observers detect emission only during the fraction of each rotation when part of the beam points toward Earth.</p>
+          <p>Critically, the position angle of linear polarisation changes with spin phase in a way consistent with the changing orientation of the magnetic field lines along the line of sight — the empirical confirmation of the model. From these polarisation sweeps the rotation geometry is determined: the angle between the magnetic axis and the spin axis, and between the spin axis and our line of sight.</p>
+          <p>Despite the geometric model being firmly established since 1968, <em>the underlying mechanism producing the coherent radio emission remains poorly understood even today</em> — but this gap does not impede any of the gravity experiments described elsewhere in this review.</p>
+        </div>
+      </div>
+      <div class="concept-node" data-concept="folding">
+        <span class="more-hint">+</span>
+        <h4>Folding & timing</h4>
+        <p>Thousands of noisy individual pulses are averaged into a stable profile; comparison with a template yields a Time of Arrival to fractions of a microsecond.</p>
+        <div class="concept-detail">
+          <p>Individual pulses vary chaotically in shape and amplitude — by themselves they are not useful. But adding them in phase produces an extraordinarily stable average profile, characteristic of each pulsar. This process is called <em>folding</em>.</p>
+          <p>To fold properly, an a priori estimate of the spin frequency at the receiving telescope is needed. This local frequency changes constantly because of the time conversion between pulsar proper time and observatory coordinate time. The prediction is made by a timing program using the best available pulsar ephemeris.</p>
+          <p>A high signal-to-noise version of the folded profile becomes the <em>template</em>. Cross-correlating each new observation with the template produces the Time of Arrival (ToA), the fundamental observable. For PSR J1909−3744 the precision reaches 0.1 µs — though such precision is rare, limited by signal-to-noise, dispersion variations, and intrinsic pulse jitter.</p>
+        </div>
+      </div>
+      <div class="concept-node" data-concept="keplerian">
+        <span class="more-hint">+</span>
+        <h4>Keplerian orbit</h4>
+        <p>Five parameters (P_b, x, e, ω, T_0) describe the Newtonian binary motion encoded in the modulation of the ToAs.</p>
+        <div class="concept-detail">
+          <p>The five Keplerian parameters describing the radial orbital motion of the pulsar are: orbital period <em>P_b</em>, projected semi-major axis of the pulsar's orbit <em>x = a_p sin i / c</em>, eccentricity <em>e</em>, longitude of periastron <em>ω</em>, and time of periastron passage <em>T_0</em>.</p>
+          <p>From these, the mass function follows directly:</p>
+          <div class="formula-mini">f(M_p, M_c, i) = (M_c sin i)³ / (M_p + M_c)² = x³ / T_⊙ · (P_b/2π)⁻²</div>
+          <p>Two further parameters — the inclination <em>i</em> and the position angle of the ascending node <em>Ω</em> — generally cannot be determined from radial-motion measurements alone. Pulsar timing is fundamentally one-dimensional: only the line-of-sight component of orbital motion is accessible.</p>
+          <p>For ~80% of binary pulsars, the mass function above is the only available mass constraint. For the rest, post-Keplerian parameters or optical observations of the companion break the degeneracy.</p>
+        </div>
+      </div>
+      <div class="concept-node" data-concept="postkep">
+        <span class="more-hint">+</span>
+        <h4>Post-Keplerian PK</h4>
+        <p>Small relativistic corrections — periastron advance, Einstein delay, Shapiro delay, orbital decay, geometric deformations — each measurable as a separate parameter.</p>
+        <div class="concept-detail">
+          <p>Post-Keplerian parameters quantify relativistic deviations from Keplerian motion. They are <em>theory-independent</em> phenomenological observables — fitted from timing data without assuming any specific gravity theory. The standard set:</p>
+          <ul class="tests-list">
+            <li><b>ω̇</b> · time-averaged advance of periastron</li>
+            <li><b>γ</b> · amplitude of the Einstein delay (gravitational redshift + transverse Doppler)</li>
+            <li><b>Ṗ_b</b> · rate of change of orbital period — dominated by GW damping in compact systems</li>
+            <li><b>r, s</b> · range and shape of the Shapiro delay</li>
+            <li><b>δ_θ, δ_r</b> · relativistic angular and radial deformations of the orbit</li>
+          </ul>
+          <p>In GR, each PK parameter is a simple function of the Keplerian parameters and the two component masses. This "PK simplicity" is a consequence of the <em>effacement of internal structure</em>: in GR, the motion of bodies in an N-body system is independent of their internal composition. Most alternative theories break this property.</p>
+        </div>
+      </div>
+      <div class="concept-node" data-concept="massmass">
+        <span class="more-hint">+</span>
+        <h4>Mass–mass diagram</h4>
+        <p>Each PK observable is a curve in the (m_p, m_c) plane. GR demands all curves cross at one point.</p>
+        <div class="concept-detail">
+          <p>For every measured PK parameter, GR predicts a relation between the two component masses. Plotting that relation as a curve in the m_p versus m_c plane produces one constraint. Two PK parameters give two curves whose intersection determines both masses. Three or more PK parameters give a <em>self-consistency test</em>: all curves must intersect at one common point.</p>
+          <p>If they do, GR has passed the test. If they don't, GR is in trouble. So far it has never been in trouble.</p>
+          <p>The Hulse–Taylor pulsar offered three crossing curves; the Double Pulsar today offers six. The Double Pulsar's mass–mass diagram is the most stringent quasi-stationary + radiative test of GR ever performed in the strong-field regime, with all curves agreeing at relative precision ~6×10⁻⁵.</p>
+        </div>
+      </div>
+      <div class="concept-node" data-concept="sep">
+        <span class="more-hint">+</span>
+        <h4>Strong Equivalence Principle</h4>
+        <p>The architecture of GR conjectured to be unique among metric theories that fully embody the SEP — the property pulsars test most stringently.</p>
+        <div class="concept-detail">
+          <p>The SEP is an extension of the Einstein Equivalence Principle to include local gravitational experiments with self-gravitating bodies. It encompasses three statements:</p>
+          <ul class="tests-list">
+            <li>Universality of free fall extends to self-gravitating bodies in an external gravitational field — no Nordtvedt effect</li>
+            <li>No preferred-location effects — the outcome of any local experiment is independent of where and when in the universe</li>
+            <li>No preferred-frame effects — independent of the motion of the local freely-falling reference frame</li>
+          </ul>
+          <p>It is conjectured that <em>GR is the only viable metric theory of gravity that fully embodies the SEP</em>. Pulsar tests are uniquely powerful for SEP because neutron stars carry significant fractional gravitational binding energy (~10–20% of rest-mass), unlike Solar-System bodies (≲10⁻⁶). Any SEP violation hidden by smallness in the Solar System becomes amplified in pulsar systems.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="infographic-wrap reveal">
+    <div class="resource-tag">Visual reference · syllabus infographic</div>
+    <img src="https://res.cloudinary.com/dpbjs58ci/image/upload/f_auto,q_auto/Infografia_cy2lhv" alt="Pulsar gravity infographic — overview of the syllabus" loading="lazy">
+    <div class="infographic-cap">Fig. — Overview infographic of the topic</div>
+  </div>
+</section>
+
+<!-- ======= WHEN ======= -->
+<section class="chapter" id="when">
+  <div class="chapter-tag" data-num="02 —">When the field was built</div>
+  <h2 class="chapter-title">A <span class="accent">timeline</span> of milestones.</h2>
+  <p class="chapter-lead">From an unrecognised signal on a chart recorder to the most precise gravity test ever performed — six decades of observation, theory, and persistence.</p>
+
+  <div class="timeline reveal">
+    <div class="tl-item">
+      <div class="tl-year">1934</div><div class="tl-dot"></div>
+      <div class="tl-title">Neutron stars predicted</div>
+      <div class="tl-body">Baade and Zwicky propose that core-collapse supernovae produce dense remnants more compact than white dwarfs.</div>
+      <div class="tl-tag">Prediction</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">1967</div><div class="tl-dot"></div>
+      <div class="tl-title">First pulsar discovered</div>
+      <div class="tl-body">Jocelyn Bell notices a periodic signal at 81.5 MHz at the Cambridge radio telescope. The 1.337 s pulsation reappears with sidereal regularity — the first radio pulsar, CP 1919.</div>
+      <div class="tl-tag">Discovery</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">1968</div><div class="tl-dot"></div>
+      <div class="tl-title">Vela & Crab pulsars</div>
+      <div class="tl-body">Association of pulsars with supernova remnants and the 33 ms Crab pulsar settle the rotating-neutron-star model proposed by Gold and Pacini.</div>
+      <div class="tl-tag">Identification</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">1974</div><div class="tl-dot"></div>
+      <div class="tl-title">Hulse–Taylor binary pulsar</div>
+      <div class="tl-body">PSR B1913+16 is discovered with the Arecibo telescope — the first pulsar in a binary system. A new field of experimental gravity is born.</div>
+      <div class="tl-tag">Foundational</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">1979</div><div class="tl-dot"></div>
+      <div class="tl-title">Orbital decay measured</div>
+      <div class="tl-body">Decreasing orbital period of B1913+16 matches the GR prediction for energy loss by gravitational waves — first observational evidence of GW reality.</div>
+      <div class="tl-tag">GW evidence</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">1986</div><div class="tl-dot"></div>
+      <div class="tl-title">DD86 timing model</div>
+      <div class="tl-body">Damour and Deruelle publish the analytical, theory-independent post-Keplerian timing formula that becomes the standard tool for binary-pulsar gravity tests.</div>
+      <div class="tl-tag">Theory</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">1990</div><div class="tl-dot"></div>
+      <div class="tl-title">PSR B1534+12</div>
+      <div class="tl-body">Wolszczan discovers a second highly relativistic double-neutron-star binary, soon yielding precision Shapiro-delay measurements and a quantitative test of geodetic precession.</div>
+      <div class="tl-tag">DNS</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">2003</div><div class="tl-dot"></div>
+      <div class="tl-title">The Double Pulsar</div>
+      <div class="tl-body">PSR J0737−3039A/B — the only known system where both neutron stars are observed as pulsars — is found at Parkes. It will become the most precise gravity laboratory ever.</div>
+      <div class="tl-tag">Breakthrough</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">2014</div><div class="tl-dot"></div>
+      <div class="tl-title">Triple system pulsar</div>
+      <div class="tl-body">PSR J0337+1715 — a millisecond pulsar in a hierarchical triple with two white dwarfs — enables the most precise test ever of the strong-field universality of free fall.</div>
+      <div class="tl-tag">SEP test</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">2017</div><div class="tl-dot"></div>
+      <div class="tl-title">GW170817</div>
+      <div class="tl-body">A binary-neutron-star merger detected by LIGO/Virgo and observed in electromagnetic light — the realization of the promise raised by the Hulse–Taylor binary 43 years earlier.</div>
+      <div class="tl-tag">Multi-messenger</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">2021</div><div class="tl-dot"></div>
+      <div class="tl-title">Six PK parameters in J0737−3039</div>
+      <div class="tl-body">The Double Pulsar yields a 16-year analysis with six independent post-Keplerian parameters — including next-to-leading order corrections — confirming GR at relative precision ~6×10⁻⁵.</div>
+      <div class="tl-tag">Strong-field GR</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-year">2024</div><div class="tl-dot"></div>
+      <div class="tl-title">First pulsar–compact-object candidate</div>
+      <div class="tl-body">A pulsar is found in a binary with a companion in the neutron-star/black-hole mass gap — opening the prospect of pulsar–black-hole gravity tests.</div>
+      <div class="tl-tag">Frontier</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= WHO ======= -->
+<section class="chapter" id="who">
+  <div class="chapter-tag" data-num="03 —">Who built this knowledge</div>
+  <h2 class="chapter-title">The <span class="accent">architects</span> of pulsar gravity.</h2>
+  <p class="chapter-lead">Half a century of binary pulsar timing has been shaped by observers, theorists, and the engineers behind the great radio dishes. Here, the people whose work defines the field.</p>
+
+  <div class="who-grid reveal">
+    <div class="person-card" data-person="bell">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Discoverer · Observer</div>
+      <div class="person-name">Jocelyn Bell Burnell</div>
+      <div class="person-when">1967 · Cambridge</div>
+      <div class="person-contrib">Detected the first radio pulsar, CP 1919, while a graduate student. Her recognition of the 1.337 s periodicity opened the entire field.</div>
+    </div>
+    <div class="person-card" data-person="hulsetaylor">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Discoverers · Observers</div>
+      <div class="person-name">Russell Hulse &amp; Joseph Taylor</div>
+      <div class="person-when">1974 · Arecibo</div>
+      <div class="person-contrib">Discovered PSR B1913+16, the first binary pulsar, and led the timing programme that produced the first evidence for gravitational waves.</div>
+    </div>
+    <div class="person-card" data-person="damour">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Theorists</div>
+      <div class="person-name">Thibault Damour &amp; Nathalie Deruelle</div>
+      <div class="person-when">1985–1986</div>
+      <div class="person-contrib">Developed the post-Keplerian timing formula (DD86) — the analytical framework underpinning virtually every modern binary-pulsar gravity test.</div>
+    </div>
+    <div class="person-card" data-person="ef">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Theorist</div>
+      <div class="person-name">Gilles Esposito-Farèse</div>
+      <div class="person-when">1992 onward</div>
+      <div class="person-contrib">Co-developed Damour–Esposito-Farèse gravity and the theoretical machinery to test scalar–tensor theories with binary pulsars, including spontaneous scalarisation.</div>
+    </div>
+    <div class="person-card" data-person="nordtvedt">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Theorist</div>
+      <div class="person-name">Kenneth Nordtvedt</div>
+      <div class="person-when">1968 onward</div>
+      <div class="person-contrib">Identified the Nordtvedt effect — the SEP-violating polarisation of an orbit by an external field — and laid the groundwork for many strong-field generalisations.</div>
+    </div>
+    <div class="person-card" data-person="wolszczan">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Observer</div>
+      <div class="person-name">Aleksander Wolszczan</div>
+      <div class="person-when">1990 · Arecibo</div>
+      <div class="person-contrib">Discovered PSR B1534+12, the second highly relativistic double-neutron-star binary, providing the first precision pulsar Shapiro-delay measurement.</div>
+    </div>
+    <div class="person-card" data-person="burgay">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Observer · Director</div>
+      <div class="person-name">Marta Burgay</div>
+      <div class="person-when">2003 · Parkes</div>
+      <div class="person-contrib">Lead author on the discovery of PSR J0737−3039A — the recycled member of the Double Pulsar system, the most relativistic binary pulsar known.</div>
+    </div>
+    <div class="person-card" data-person="kramer">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Observer · Theorist</div>
+      <div class="person-name">Michael Kramer</div>
+      <div class="person-when">2006–present</div>
+      <div class="person-contrib">Led the long-term timing analyses of the Double Pulsar that delivered six post-Keplerian parameters and the most precise strong-field gravity test ever.</div>
+    </div>
+    <div class="person-card" data-person="freirewex">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Authors · Reviewers</div>
+      <div class="person-name">Paulo Freire &amp; Norbert Wex</div>
+      <div class="person-when">MPIfR Bonn · 2024</div>
+      <div class="person-contrib">Authors of this review. Their work on pulsar–white-dwarf systems and on alternative-gravity constraints (especially DEF gravity) defines much of the modern landscape.</div>
+    </div>
+    <div class="person-card" data-person="ransom">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Observer</div>
+      <div class="person-name">Scott Ransom</div>
+      <div class="person-when">2014 · Green Bank</div>
+      <div class="person-contrib">Led the discovery and characterisation of PSR J0337+1715, the millisecond pulsar in a stellar triple — the unique laboratory for the strong-field UFF.</div>
+    </div>
+    <div class="person-card" data-person="stairs">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Observer</div>
+      <div class="person-name">Ingrid Stairs</div>
+      <div class="person-when">2003 onward</div>
+      <div class="person-contrib">Author of the previous Living Review on the topic, contributor to many DNS-system analyses, and a leader in the precision-timing community.</div>
+    </div>
+    <div class="person-card" data-person="einstein">
+      <span class="more-hint">+ MORE</span>
+      <div class="person-role">Theorist · Pioneer</div>
+      <div class="person-name">Albert Einstein</div>
+      <div class="person-when">1915</div>
+      <div class="person-contrib">Formulated General Relativity. Every test described here is, ultimately, an attempt to find the theory's first observational failure. None has succeeded.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= HOW ======= -->
+<section class="chapter" id="how">
+  <div class="chapter-tag" data-num="04 —">How we measure</div>
+  <h2 class="chapter-title">The grammar of <span class="accent">pulse arrival times.</span></h2>
+  <p class="chapter-lead">Behind every gravity test lies the same workflow: capture a faint, broadband, polarised radio signal; correct it for the dispersive interstellar medium; fold thousands of pulses into a stable profile; and compare every measured arrival time against a relativistic timing model.</p>
+
+  <div class="method-block reveal">
+    <div>
+      <div class="method-num">I</div>
+      <div class="method-name">Detection</div>
+    </div>
+    <div class="method-content">
+      <h3>Single dishes capture <em>broadband voltages</em></h3>
+      <p>Pulsars are faint, point-like radio sources, brightest at decimetric wavelengths. Sensitivity matters above all — which is why single-dish telescopes (FAST, Effelsberg, Green Bank, Parkes/Murriyang, Nançay, the former Arecibo) and large arrays operating in tied-array mode (MeerKAT, uGMRT) dominate the field.</p>
+      <p>Two voltage streams — one per polarisation — are sampled at gigasamples per second and channelised by a digital filterbank, producing four Stokes-parameter spectra (I, Q, U, V) every few tens of microseconds.</p>
+    </div>
+  </div>
+
+  <div class="method-block reveal">
+    <div>
+      <div class="method-num">II</div>
+      <div class="method-name">Dedispersion</div>
+    </div>
+    <div class="method-content">
+      <h3>The interstellar plasma <em>delays low frequencies</em></h3>
+      <p>Free electrons along the line of sight slow lower-frequency radio waves, smearing pulses in time. The delay scales as Δt ∝ DM/F², where DM is the dispersion measure (column density of free electrons).</p>
+      <div class="formula">Δt(F) = 4.1488 · DM / F²  [ms, with F in GHz]</div>
+      <p>Coherent dedispersion — applied in the Fourier domain to the raw voltages — completely removes the smearing within each channel and is the standard for high-precision timing today.</p>
+    </div>
+  </div>
+
+  <div class="method-block reveal">
+    <div>
+      <div class="method-num">III</div>
+      <div class="method-name">Folding</div>
+    </div>
+    <div class="method-content">
+      <h3>Thousands of noisy pulses become <em>one stable profile</em></h3>
+      <p>Individual pulses vary chaotically in shape and amplitude; their average is extraordinarily stable and characteristic of each pulsar. Folding — adding pulses in phase using an a priori spin model — produces this template.</p>
+      <p>The Time of Arrival (ToA) is then obtained by cross-correlating the observed profile with the template. Modern recycled millisecond pulsars deliver ToAs precise to a fraction of a microsecond.</p>
+    </div>
+  </div>
+
+  <div class="method-block reveal">
+    <div>
+      <div class="method-num">IV</div>
+      <div class="method-name">Timing model</div>
+    </div>
+    <div class="method-content">
+      <h3>Every relativistic effect adds <em>a delay</em></h3>
+      <p>The measured ToA is referenced back to the proper time of the pulsar by accounting for, in succession: the Einstein delay (special-relativistic time dilation and Solar-System gravitational redshift), the Rømer delay (geometric light propagation), the Shapiro delay (curvature-induced delay near the Sun and the binary companion), the dispersive delay, and — for binary pulsars — the four orbital delays D_R, D_S, D_E, D_A.</p>
+      <p>Programs such as TEMPO, TEMPO2 and PINT minimise the χ² of normalised residuals, fitting astrometric, spin, dispersion and orbital parameters simultaneously. A phase-coherent solution accounts unambiguously for every rotation between any two ToAs.</p>
+    </div>
+  </div>
+
+  <div class="method-block reveal">
+    <div>
+      <div class="method-num">V</div>
+      <div class="method-name">Post-Keplerian fit</div>
+    </div>
+    <div class="method-content">
+      <h3>Five Keplerian + post-Keplerian observables</h3>
+      <p>The DD86 model parametrises orbital relativity through observables that, in GR, are simple functions of the Keplerian parameters and the two component masses:</p>
+      <div class="formula">ω̇ = 3·(Pb/2π)⁻⁵ᐟ³ · (T⊙ M)²ᐟ³ · (1−e²)⁻¹  · advance of periastron<br>
+γ = (Pb/2π)¹ᐟ³ · (T⊙ M)²ᐟ³ · X_c(1+X_c) · e  · Einstein delay<br>
+Ṗ_b = −(192π/5) · (Pb/2π)⁻⁵ᐟ³ · (T⊙M)⁵ᐟ³ · X_p X_c · f(e) · GW damping<br>
+r = T⊙ M_c   ;   s = sin i  · Shapiro range &amp; shape</div>
+      <p>Each measurement gives a curve in the (m_p, m_c) plane. The intersection of all curves at a single point is the consistency test that GR has never failed.</p>
+    </div>
+  </div>
+
+  <!-- DIAGRAM -->
+  <div class="diagram-wrap reveal">
+    <div class="diagram-card">
+      <div class="diagram-title">Mass–mass diagram — schematic of the Double Pulsar</div>
+      <svg viewBox="0 0 700 460" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#040714;border:1px solid var(--line)">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#070b1f"/><stop offset="100%" stop-color="#02030a"/>
+          </linearGradient>
+        </defs>
+        <rect width="700" height="460" fill="url(#bg)"/>
+        <!-- grid -->
+        <g stroke="rgba(245,239,224,0.07)" stroke-width="1">
+          <line x1="80" y1="40" x2="80" y2="400"/>
+          <line x1="80" y1="400" x2="660" y2="400"/>
+          <line x1="80" y1="320" x2="660" y2="320" stroke-dasharray="2 4"/>
+          <line x1="80" y1="240" x2="660" y2="240" stroke-dasharray="2 4"/>
+          <line x1="80" y1="160" x2="660" y2="160" stroke-dasharray="2 4"/>
+          <line x1="80" y1="80" x2="660" y2="80" stroke-dasharray="2 4"/>
+          <line x1="200" y1="40" x2="200" y2="400" stroke-dasharray="2 4"/>
+          <line x1="320" y1="40" x2="320" y2="400" stroke-dasharray="2 4"/>
+          <line x1="440" y1="40" x2="440" y2="400" stroke-dasharray="2 4"/>
+          <line x1="560" y1="40" x2="560" y2="400" stroke-dasharray="2 4"/>
+        </g>
+        <!-- axis labels -->
+        <text x="370" y="438" fill="#a8a39a" font-family="JetBrains Mono" font-size="12" text-anchor="middle">m_pulsar  (M☉)</text>
+        <text x="30" y="225" fill="#a8a39a" font-family="JetBrains Mono" font-size="12" text-anchor="middle" transform="rotate(-90,30,225)">m_companion  (M☉)</text>
+        <text x="80" y="415" fill="#a8a39a" font-family="JetBrains Mono" font-size="10" text-anchor="middle">0.5</text>
+        <text x="200" y="415" fill="#a8a39a" font-family="JetBrains Mono" font-size="10" text-anchor="middle">1.0</text>
+        <text x="320" y="415" fill="#a8a39a" font-family="JetBrains Mono" font-size="10" text-anchor="middle">1.5</text>
+        <text x="440" y="415" fill="#a8a39a" font-family="JetBrains Mono" font-size="10" text-anchor="middle">2.0</text>
+        <text x="560" y="415" fill="#a8a39a" font-family="JetBrains Mono" font-size="10" text-anchor="middle">2.5</text>
+        <!-- ω̇  : straight line m_p+m_c=const -->
+        <line x1="120" y1="40" x2="660" y2="400" stroke="#f5efe0" stroke-width="2"/>
+        <text x="150" y="60" fill="#f5efe0" font-family="Cormorant Garamond" font-style="italic" font-size="18">ω̇</text>
+        <!-- γ  : curve -->
+        <path d="M80 380 Q 250 280 400 220 T 660 130" stroke="#e94584" stroke-width="2" fill="none"/>
+        <text x="600" y="115" fill="#e94584" font-family="Cormorant Garamond" font-style="italic" font-size="18">γ</text>
+        <!-- Ṗ_b : steeper curve -->
+        <path d="M120 50 Q 240 220 360 280 T 660 360" stroke="#7dd3fc" stroke-width="2.5" fill="none"/>
+        <text x="105" y="55" fill="#7dd3fc" font-family="Cormorant Garamond" font-style="italic" font-size="18">Ṗ_b</text>
+        <!-- s : Shapiro shape -->
+        <path d="M80 400 Q 240 280 360 220 T 660 100" stroke="#f4c430" stroke-width="2" fill="none"/>
+        <text x="630" y="92" fill="#f4c430" font-family="Cormorant Garamond" font-style="italic" font-size="18">s</text>
+        <!-- r : horizontal -->
+        <line x1="80" y1="195" x2="660" y2="195" stroke="#ff6b35" stroke-width="2"/>
+        <text x="92" y="190" fill="#ff6b35" font-family="Cormorant Garamond" font-style="italic" font-size="18">r</text>
+        <!-- mass ratio R -->
+        <line x1="80" y1="400" x2="500" y2="40" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.8"/>
+        <text x="430" y="60" fill="#ffffff" font-family="Cormorant Garamond" font-style="italic" font-size="18">R</text>
+        <!-- intersection -->
+        <circle cx="380" cy="208" r="8" fill="none" stroke="#f4c430" stroke-width="2"/>
+        <circle cx="380" cy="208" r="18" fill="none" stroke="#f4c430" stroke-width="1" opacity="0.5"/>
+        <text x="395" y="245" fill="#f4c430" font-family="JetBrains Mono" font-size="10">m_A = 1.338  m_B = 1.249</text>
+        <!-- title -->
+        <text x="20" y="25" fill="#f5efe0" font-family="Cormorant Garamond" font-style="italic" font-size="16">PSR J0737−3039A/B  ·  PK consistency in GR</text>
+      </svg>
+    </div>
+    <div class="diagram-card">
+      <div class="diagram-title">The five (and more) curves</div>
+      <ul class="diagram-legend">
+        <li><span class="lk" style="background:#f5efe0"></span><b>ω̇</b> · advance of periastron</li>
+        <li><span class="lk" style="background:#e94584"></span><b>γ</b> · Einstein delay (gravitational redshift + transverse Doppler)</li>
+        <li><span class="lk" style="background:#7dd3fc"></span><b>Ṗ_b</b> · orbital decay through GW emission</li>
+        <li><span class="lk" style="background:#ff6b35"></span><b>r</b> · Shapiro range — companion mass</li>
+        <li><span class="lk" style="background:#f4c430"></span><b>s</b> · Shapiro shape — orbital inclination</li>
+        <li><span class="lk" style="background:#ffffff"></span><b>R = m_A/m_B</b> · mass ratio from x_A and x_B</li>
+      </ul>
+      <p style="margin-top:18px;font-size:0.9rem;color:#c8c2b3;line-height:1.6">In GR, every curve is a function only of the two masses and well-measured Keplerian parameters. Their crossing at one point is the test. The Double Pulsar's six independent PK parameters all agree to within ~6×10⁻⁵.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======= MIND MAP ======= -->
+<section class="mindmap-section reveal">
+  <div class="chapter-tag" data-num="·· —" style="justify-content:center">Conceptual map</div>
+  <h2 class="chapter-title" style="text-align:center;margin-bottom:24px">A bird's eye view.</h2>
+  <p class="chapter-lead" style="text-align:center;margin:0 auto 56px">The architecture of the field at a glance — the conceptual web that connects neutron-star physics, post-Keplerian formalism, alternative theories of gravity and the systems that test them.</p>
+  <div class="mindmap-frame">
+    <img src="https://res.cloudinary.com/dpbjs58ci/image/upload/f_auto,q_auto/NotebookLM_Mind_Map_txgzmg" alt="Mind map — conceptual architecture of pulsar gravity tests" loading="lazy">
+  </div>
+  <div class="mindmap-cap">Mind map · the architecture of the field</div>
+</section>
+
+<!-- ======= WHERE ======= -->
+<section class="chapter" id="where">
+  <div class="chapter-tag" data-num="05 —">Where the work is done</div>
+  <h2 class="chapter-title">Listening posts <span class="accent">around the world.</span></h2>
+  <p class="chapter-lead">Pulsar timing demands sensitivity. The instruments that have shaped this field are the largest single-dish radio telescopes ever built, plus the institutional collaborations that operate them.</p>
+
+  <div class="loc-grid reveal">
+    <div class="loc-card">
+      <div class="loc-icon">FAST</div>
+      <div class="loc-name">Five-hundred-metre Aperture Spherical Telescope</div>
+      <div class="loc-place">Guizhou, China</div>
+      <div class="loc-desc">Currently the most sensitive single-dish radio telescope in the world for pulsar observations. Already responsible for hundreds of new discoveries.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">AO</div>
+      <div class="loc-name">Arecibo 305-m Telescope</div>
+      <div class="loc-place">Puerto Rico (1963–2020)</div>
+      <div class="loc-desc">Site of the discoveries of B1913+16, B1534+12, J1738+0333 and many others. No longer in operation, but its data still drive precision tests today.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">EFF</div>
+      <div class="loc-name">Effelsberg 100-m Telescope</div>
+      <div class="loc-place">Effelsberg, Germany</div>
+      <div class="loc-desc">Operated by the Max-Planck-Institut für Radioastronomie. Central to the long-baseline timing of B1937+21, J1744−1134 and the European PTA effort.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">GBT</div>
+      <div class="loc-name">Green Bank Telescope</div>
+      <div class="loc-place">West Virginia, USA</div>
+      <div class="loc-desc">100-m fully steerable dish; discovery instrument for PSR J0337+1715, the triple-system pulsar that delivered the strongest UFF test for neutron stars.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">PKS</div>
+      <div class="loc-name">Murriyang (Parkes) 64-m</div>
+      <div class="loc-place">New South Wales, Australia</div>
+      <div class="loc-desc">Discovery telescope of the Double Pulsar PSR J0737−3039A/B and many compact double-neutron-star systems. Backbone of the Parkes Pulsar Timing Array.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">JBO</div>
+      <div class="loc-name">Lovell Telescope, Jodrell Bank</div>
+      <div class="loc-place">Manchester, UK</div>
+      <div class="loc-desc">75-m dish operated by the University of Manchester. Long-term pulsar monitoring and a founding partner of the European Pulsar Timing Array.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">MK</div>
+      <div class="loc-name">MeerKAT Array</div>
+      <div class="loc-place">Karoo desert, South Africa</div>
+      <div class="loc-desc">64 × 13.5-m dishes operated by SARAO. Now delivering some of the most precise timing ever measured for the Double Pulsar; future SKA precursor.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">NRT</div>
+      <div class="loc-name">Nançay Radio Telescope</div>
+      <div class="loc-place">Sologne, France</div>
+      <div class="loc-desc">Meridian-transit instrument with daily pulsar campaigns; key contributor to the limits on α₁ from PSR J1909−3744.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">GMRT</div>
+      <div class="loc-name">Upgraded GMRT</div>
+      <div class="loc-place">Narayangaon, India</div>
+      <div class="loc-desc">30-dish array operated by NCRA-TIFR. Precision timing at low frequencies, complementary to the larger single dishes.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">MPIfR</div>
+      <div class="loc-name">Max-Planck-Institut für Radioastronomie</div>
+      <div class="loc-place">Bonn, Germany</div>
+      <div class="loc-desc">Home institution of the authors of this review. Coordinates much of the long-term timing of relativistic binary pulsars.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">PTA</div>
+      <div class="loc-name">International PTA collaborations</div>
+      <div class="loc-place">EPTA · NANOGrav · PPTA · InPTA · MPTA</div>
+      <div class="loc-desc">Federations of telescopes and groups timing dozens of millisecond pulsars to detect nano-Hz gravitational waves and refine gravity tests.</div>
+    </div>
+    <div class="loc-card">
+      <div class="loc-icon">SKA</div>
+      <div class="loc-name">Square Kilometre Array (in construction)</div>
+      <div class="loc-place">South Africa &amp; Australia</div>
+      <div class="loc-desc">When operational, will revolutionise pulsar searches and timing precision — and probably yield the first pulsar in orbit around a stellar-mass black hole.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= TESTS / RESULTS gallery ======= -->
+<section class="chapter">
+  <div class="chapter-tag" data-num="·· —">Results</div>
+  <h2 class="chapter-title">Six laboratories, <span class="accent">one verdict.</span></h2>
+  <p class="chapter-lead">Each binary system tests a different combination of relativistic effects. Together they form a strong-field portrait of gravity in which General Relativity has, so far, never been wrong.</p>
+
+  <div class="tests-grid reveal">
+    <div class="test-card" data-pulsar="hulsetaylor">
+      <span class="more-hint">EXPLORE →</span>
+      <div class="test-name">Hulse–Taylor binary</div>
+      <div class="test-pulsar">PSR B1913+16  ·  P = 59 ms  ·  P_b = 7.75 h  ·  e = 0.62</div>
+      <div class="test-result">The first binary pulsar. Measurement of three PK parameters (ω̇, γ, Ṗ_b) confirmed the existence of gravitational waves through orbital decay — a result that ultimately motivated the construction of LIGO.</div>
+      <div class="test-precision">GW damping confirmed at ~0.3%</div>
+    </div>
+    <div class="test-card" data-pulsar="double">
+      <span class="more-hint">EXPLORE →</span>
+      <div class="test-name">Double Pulsar</div>
+      <div class="test-pulsar">PSR J0737−3039A/B  ·  P_A = 23 ms  ·  P_b = 2.5 h</div>
+      <div class="test-result">The only known binary where both neutron stars are visible as pulsars. Six post-Keplerian parameters measured, including 2PN and Lense–Thirring corrections to the periastron advance and the geodetic precession of pulsar B.</div>
+      <div class="test-precision">GW quadrupole formula at 6.3×10⁻⁵</div>
+    </div>
+    <div class="test-card" data-pulsar="b1534">
+      <span class="more-hint">EXPLORE →</span>
+      <div class="test-name">PSR B1534+12</div>
+      <div class="test-pulsar">P = 38 ms  ·  P_b = 10.1 h  ·  i = 77.2°</div>
+      <div class="test-result">Second relativistic DNS to be discovered. First precision Shapiro-delay measurement in the field of a strongly self-gravitating mass; first quantitative test of geodetic precession of a pulsar (0.59°/yr).</div>
+      <div class="test-precision">Six PK parameters measured</div>
+    </div>
+    <div class="test-card" data-pulsar="j1906">
+      <span class="more-hint">EXPLORE →</span>
+      <div class="test-name">PSR J1906+0746</div>
+      <div class="test-pulsar">Young pulsar, P = 144 ms, P_b = 4.0 h</div>
+      <div class="test-result">Spin axis misaligned by 104° with the orbital angular momentum. Modelling polarisation changes of both main pulse and interpulse delivered the most precise pulsar test of geodetic precession: 2.17°/yr vs 2.234°/yr predicted.</div>
+      <div class="test-precision">Best test of geodetic precession</div>
+    </div>
+    <div class="test-card" data-pulsar="j1757">
+      <span class="more-hint">EXPLORE →</span>
+      <div class="test-name">PSR J1757−1854</div>
+      <div class="test-pulsar">e = 0.606  ·  v_periastron = 1060 km/s</div>
+      <div class="test-result">The most relativistic DNS in some respects. Five PK parameters measured, including both orthometric Shapiro parameters. Periastron separation only 0.75 R_⊙. Coalescence in 76 Myr.</div>
+      <div class="test-precision">All five PK parameters consistent with GR</div>
+    </div>
+    <div class="test-card" data-pulsar="j0337">
+      <span class="more-hint">EXPLORE →</span>
+      <div class="test-name">PSR J0337+1715</div>
+      <div class="test-pulsar">MSP in stellar triple system  ·  inner P_b = 1.63 d</div>
+      <div class="test-result">Millisecond pulsar with two white-dwarf companions. The strong external acceleration enables the most precise strong-field test of the universality of free fall: |Δ_p,0| &lt; 2.6×10⁻⁶, three orders of magnitude better than previous limits.</div>
+      <div class="test-precision">Brans–Dicke ω &gt; 150 000</div>
+    </div>
+    <div class="test-card" data-pulsar="j1738">
+      <span class="more-hint">EXPLORE →</span>
+      <div class="test-name">PSR J1738+0333</div>
+      <div class="test-pulsar">MSP–WD  ·  P_b = 8.5 h  ·  asymmetric system</div>
+      <div class="test-result">Optically bright WD companion enables independent mass measurement via spectroscopy. The agreement of the orbital decay with GR yields one of the strongest constraints on dipolar gravitational radiation predicted by alternative theories.</div>
+      <div class="test-precision">|κ_D¹ᐟ² s_p| &lt; 2×10⁻³</div>
+    </div>
+    <div class="test-card" data-pulsar="j2222">
+      <span class="more-hint">EXPLORE →</span>
+      <div class="test-name">PSR J2222−0137</div>
+      <div class="test-pulsar">Heavy MSP with massive WD  ·  m_p = 1.83 M⊙</div>
+      <div class="test-result">Three PK parameters consistently fit GR at ~1%. The exceptionally precise VLBI distance (268 ± 1 pc) enables a clean measurement of orbital decay, closing the spontaneous-scalarisation mass gap in DEF gravity.</div>
+      <div class="test-precision">Closes DEF scalarisation window</div>
+    </div>
+    <div class="test-card" data-pulsar="j1909">
+      <span class="more-hint">EXPLORE →</span>
+      <div class="test-name">PSR J1909−3744</div>
+      <div class="test-pulsar">P = 2.9 ms · best-timed MSP-WD known</div>
+      <div class="test-result">Exquisite timing precision on a near-edge-on pulsar–white-dwarf binary delivers the most stringent limit on the preferred-frame parameter α̂₁ (|α̂₁| &lt; 2×10⁻⁵), and a precise WD-mass measurement that calibrates other gravity tests.</div>
+      <div class="test-precision">Best limit on α̂₁ to date</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= STOCHASTIC GW BACKGROUND ======= -->
+<section class="gwbg-section reveal">
+  <div class="gwbg-inner">
+    <div class="gwbg-text">
+      <div class="chapter-tag" data-num="·· —">Pulsar timing arrays</div>
+      <h2 class="chapter-title">The stochastic <span class="accent">gravitational-wave background.</span></h2>
+      <p class="chapter-lead">Pulsars are not only laboratories for binary gravity. Networks of millisecond pulsars, timed to nanosecond precision over decades, act as galactic-scale gravitational-wave detectors.</p>
+      <p style="font-size:1.02rem;color:#d4cebd;line-height:1.75;max-width:620px;margin-bottom:18px">When a low-frequency gravitational wave passes between Earth and a distant pulsar, it imprints a tiny, correlated perturbation on the pulse arrival times. By cross-correlating timing residuals from many pulsars across the sky, Pulsar Timing Arrays — NANOGrav, EPTA, PPTA, InPTA, MPTA — search for the diffuse <em>stochastic gravitational-wave background</em>: the sum of every supermassive black-hole binary in the universe spiraling toward merger.</p>
+      <p style="font-size:1.02rem;color:#d4cebd;line-height:1.75;max-width:620px">In 2023, three independent collaborations announced evidence for this signal. Pulsar timing — the same technique that confirmed gravitational waves indirectly fifty years ago through the Hulse–Taylor binary — has now begun to detect them directly.</p>
+
+      <!-- AUDIO PLAYER -->
+      <div class="audio-block">
+        <div class="audio-meta">
+          <div class="audio-tag">◆ Listen · audio briefing</div>
+          <div class="audio-title">The cosmic hum that <em>challenges Einstein</em></div>
+          <div class="audio-sub">A spoken summary of the stochastic GW background and its connection to pulsar timing arrays.</div>
+        </div>
+        <audio controls preload="metadata" class="audio-player">
+          <source src="https://res.cloudinary.com/dpbjs58ci/video/upload/q_auto/f_auto/v1777887025/El_zumbido_c%C3%B3smico_que_desaf%C3%ADa_a_Einstein_bi0hsp.mp3" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+    </div>
+    <div class="gwbg-video">
+      <video autoplay muted loop playsinline>
+        <source src="https://res.cloudinary.com/dpbjs58ci/video/upload/q_auto/f_auto/v1777881405/Fondo_Estoc%C3%A1stico_de_Ondas_d1x8cx.mp4" type="video/mp4">
+      </video>
+      <div class="gwbg-caption">Visualisation · stochastic gravitational-wave background</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= NANOGRAV SLIDE DECK ======= -->
+<section class="deck-section reveal" id="deck">
+  <div class="chapter-tag" data-num="·· —">Visual companion · NANOGrav 15-year analysis</div>
+  <h2 class="chapter-title">Decoding the <span class="accent">cosmic hum.</span></h2>
+  <div class="deck-intro">
+    <p class="chapter-lead">A 15-slide visual breakdown of the NANOGrav 15-year dataset — from the Bayesian evidence for a common red signal to the diagnostic matrix that distinguishes pure tensor modes from scalar-transverse breathing modes.</p>
+    <p>The deck walks through the three frontiers opened by the data: <em>detection</em> of the gravitational-wave background, the <em>origin</em> debate (supermassive black-hole binaries versus a primordial echo amplified by massive gravity), and the <em>polarisation anomaly</em> that hints at physics beyond pure General Relativity.</p>
+    <div class="deck-meta">
+      <span><strong>15</strong> slides</span>
+      <span><strong>Format</strong> · 16:9 visual essay</span>
+      <span><strong>Language</strong> · Spanish</span>
+      <span><strong>Click any slide</strong> to enlarge</span>
+    </div>
+  </div>
+
+  <div class="deck-grid" id="deck-grid">
+    <!-- slides injected by JS -->
+  </div>
+</section>
+
+<!-- lightbox -->
+<div class="deck-lightbox" id="deck-lightbox" role="dialog" aria-modal="true" aria-hidden="true">
+  <button class="deck-close" id="deck-close" aria-label="Close">×</button>
+  <button class="deck-nav prev" id="deck-prev" aria-label="Previous slide">‹</button>
+  <img class="deck-lightbox-img" id="deck-lightbox-img" alt="">
+  <button class="deck-nav next" id="deck-next" aria-label="Next slide">›</button>
+  <div class="deck-lightbox-info" id="deck-lightbox-info"></div>
+</div>
+
+<section class="chapter" id="why">
+  <div class="chapter-tag" data-num="06 —">Why this matters</div>
+  <h2 class="chapter-title">A field that won't <span class="accent">stop testing.</span></h2>
+
+  <div class="why-content reveal">
+    <p>Why does it matter that, fifty years after the discovery of the first binary pulsar, General Relativity still wins every contest? It matters because the universe could have been otherwise — and might still be, in regions we have not yet reached.</p>
+    <p>Solar System tests of gravity probe the post-Newtonian limit, where curvature is feeble and velocities are tiny. Pulsars probe an entirely different regime: two compact bodies whose gravitational binding energies are a sizeable fraction of their rest-mass energies, orbiting in spacetimes whose curvature exceeds anything imaged by the Event Horizon Telescope. That GR survives <em>here</em> is not a foregone conclusion. Many alternative theories — Bekenstein's TeVeS, large parts of Damour–Esposito-Farèse gravity, certain Einstein-Aether and scalar-Gauss-Bonnet models — predict observable departures: dipolar gravitational waves, scalarised neutron stars, a time-varying gravitational constant, preferred-frame effects that polarise circular orbits. None has been seen.</p>
+    <p>The pulsar laboratory therefore plays a complementary role to the LIGO/Virgo/KAGRA network and to event-horizon-scale imaging. Each tests gravity in a distinct regime; together they triangulate the empirical landscape of strong-field physics. And pulsar tests have a unique virtue — they are <em>quasi-stationary</em>: every effect accumulates over decades of observation, and the precision grows with time.</p>
+    <p>What remains? The detection of a pulsar–black-hole binary; a measurement of the moment of inertia of a neutron star to constrain the dense-matter equation of state; the discovery of more compact double-neutron-star systems where Lense–Thirring precession and second-post-Newtonian effects become routinely measurable; a relativistic pulsar in orbit around the supermassive black hole at the Galactic Centre. Each of these is plausible within the next decade. Each could rewrite chapters of this review.</p>
+  </div>
+
+  <div class="future-grid reveal">
+    <div class="future-item">
+      <div class="future-num">FRONTIER · 01</div>
+      <div class="future-title">Pulsar–black-hole binaries</div>
+      <div class="future-text">A 2024 discovery of a pulsar with a companion in the NS/BH mass gap has already opened the door. A pulsar around a stellar-mass BH would give access to no-hair-theorem tests.</div>
+    </div>
+    <div class="future-item">
+      <div class="future-num">FRONTIER · 02</div>
+      <div class="future-title">Moment of inertia of A</div>
+      <div class="future-text">Continued timing of the Double Pulsar may constrain I_A to within 10% by ~2030, breaking the EoS uncertainty in radiative tests and providing a Lense–Thirring measurement.</div>
+    </div>
+    <div class="future-item">
+      <div class="future-num">FRONTIER · 03</div>
+      <div class="future-title">Multi-messenger laboratories</div>
+      <div class="future-text">LISA will detect the most compact binary pulsars in our Galaxy. Joint timing + GW observations will become a new mode of strong-field gravity tests.</div>
+    </div>
+    <div class="future-item">
+      <div class="future-num">FRONTIER · 04</div>
+      <div class="future-title">A pulsar at Sgr A*</div>
+      <div class="future-text">Discovery of a pulsar in close orbit around the Galactic-Centre black hole would enable unprecedented BH-physics tests, including no-hair and quadrupole-moment measurements.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======= SOURCES ======= -->
+<section class="sources">
+  <h3>Source — primary document</h3>
+  <div class="source-card">
+    <div class="stitle">Gravity Experiments with Radio Pulsars</div>
+    <div class="sauthors">Paulo C. C. Freire &amp; Norbert Wex</div>
+    <div class="sjournal">Living Reviews in Relativity (2024) 27:5 — Max-Planck-Institut für Radioastronomie, Bonn — DOI 10.1007/s41114-024-00051-y</div>
+  </div>
+</section>
+
+<footer>
+  <p class="quote">"So far, GR has passed all the pulsar tests with flying colours."</p>
+  <p>An interactive review · structured around What · When · Who · How · Where · Why</p>
+</footer>
+
+<!-- ======= MODAL ======= -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <article class="modal" id="modal-content">
+    <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+    <div id="modal-body"></div>
+  </article>
+</div>
+
+<script>
+// ======= REVEAL =======
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+},{threshold:0.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ======= NAV ACTIVE =======
+const links=document.querySelectorAll('.nav-links a');
+const sections=[...document.querySelectorAll('section[id], header.hero')];
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY+120;
+  let active=null;
+  sections.forEach(s=>{ if(s.offsetTop<=y) active=s.id; });
+  links.forEach(l=>{ l.style.color = (l.getAttribute('href')==='#'+active)?'var(--bone)':''; });
+},{passive:true});
+
+// ======= CONCEPT NODES (in-place expand) =======
+document.querySelectorAll('.concept-node').forEach(node=>{
+  node.addEventListener('click',()=>{
+    const isOpen = node.classList.contains('open');
+    document.querySelectorAll('.concept-node.open').forEach(n=>n.classList.remove('open'));
+    if(!isOpen) node.classList.add('open');
+  });
+});
+
+// ======= MODAL DATA =======
+const PULSAR_DATA = {
+  hulsetaylor:{
+    tag:"Pulsar laboratory · 1974",
+    title:"Hulse–Taylor binary",
+    sub:"PSR B1913+16",
+    params:[["Spin period","59 ms"],["Orbital period","7.75 h"],["Eccentricity","0.62"],["m_pulsar","1.44 M☉"],["m_companion","1.39 M☉"],["Inclination","47.2°"]],
+    sections:[
+      {h:"Discovery",p:"Discovered in summer 1974 by Russell Hulse and Joseph Taylor with the Arecibo 305-m telescope. The first pulsar found in a binary system. Its discovery opened the entire field of experimental gravity beyond the post-Newtonian Solar-System regime."},
+      {h:"What it tests",p:"Three post-Keplerian parameters: advance of periastron ω̇ ≈ 4.2°/yr, the Einstein delay γ, and the orbital decay Ṗ_b. The agreement of all three with GR provided the first evidence for the reality of gravitational waves — emitted by the accelerated motion of the two strongly self-gravitating neutron stars."},
+      {h:"What's special",p:"The radiative test (orbital decay through GW emission) has now stagnated at around 0.3% precision because of imprecise distance, which limits correction for the Galactic-acceleration contribution. Continued timing has detected the Shapiro delay as well, and even a marginal hint of the relativistic angular deformation δ_θ. The pulsar is also subject to geodetic precession at ~1.2°/yr, observed but not yet quantified."},
+      {h:"Future",p:"Coalescence in ~300 Myr. The system will continue providing tighter tests but is now surpassed in precision by the Double Pulsar."}
+    ]
+  },
+  double:{
+    tag:"Pulsar laboratory · 2003",
+    title:"Double Pulsar",
+    sub:"PSR J0737−3039A/B",
+    params:[["P_A","22.7 ms"],["P_B","2.77 s"],["P_b","2.45 h"],["Eccentricity","0.088"],["m_A","1.338 M☉"],["m_B","1.249 M☉"],["Inclination","89.36°"],["Distance","735 ± 60 pc"]],
+    sections:[
+      {h:"Discovery",p:"Discovered in 2003 with the Parkes (Murriyang) telescope by Burgay and collaborators. The only known binary system where both neutron stars are detected as pulsars from Earth — pulsar A is a mildly recycled 23 ms pulsar, pulsar B a non-recycled 2.77 s pulsar."},
+      {h:"What it tests",p:"Six independent post-Keplerian parameters from timing pulsar A: ω̇, γ, Ṗ_b, r, s and a marginal δ_θ — plus the mass ratio R from x_A and x_B, and the geodetic precession of pulsar B from eclipse modelling. Every PK parameter has been measured with such precision that next-to-leading order (NLO) corrections must be included to fit the data."},
+      {h:"The headline result",p:"The orbital decay agrees with the GR prediction to relative precision Ṗ_b^int / Ṗ_b^GR = 0.999963 ± 0.000063 — by far the most precise test of GR's quadrupole formula for GW emission, and a confirmation of the effacement of internal structure even in the presence of two strongly self-gravitating neutron stars."},
+      {h:"What's special",p:"Tilted only 0.64° from edge-on. The Shapiro delay reaches ~130 µs near superior conjunction. The radio signal of pulsar A is deflected by ~0.03° as it passes pulsar B — the first deflection-of-light measurement in the field of a neutron star. The spacetime curvature probed exceeds the Event Horizon Telescope's view of Sgr A* by orders of magnitude."},
+      {h:"Future",p:"Continued timing may constrain the moment of inertia I_A to ~10% by 2030, providing a new EoS constraint and a Lense–Thirring test. Coalescence in 86 Myr."}
+    ]
+  },
+  b1534:{
+    tag:"Pulsar laboratory · 1990",
+    title:"PSR B1534+12",
+    sub:"DNS · second highly relativistic binary",
+    params:[["Spin period","37.9 ms"],["Orbital period","10.1 h"],["Eccentricity","0.27"],["Inclination","77.2°"],["Distance","0.94 kpc (VLBI)"]],
+    sections:[
+      {h:"Discovery",p:"Discovered in 1990 by Aleksander Wolszczan with the Arecibo telescope — the second double-neutron-star system suitable for gravity tests."},
+      {h:"What it tests",p:"Six PK parameters measured: the standard ω̇, γ, Ṗ_b, plus precise Shapiro range and shape r and s thanks to the near-edge-on geometry, and the geodetic precession rate of the pulsar (0.59°/yr — first quantitative test of pulsar geodetic precession)."},
+      {h:"What's special",p:"The first precision test of the Shapiro delay in the gravitational field of a strongly self-gravitating mass. The misalignment between pulsar spin and orbital angular momentum (~30°) — a relic of the second supernova kick — produces a clean polarisation signature, allowing the geodetic precession rate to be measured."},
+      {h:"Limit",p:"The radiative test was long limited by uncertain distance. A reliable VLBI distance enables a robust 4% (95% C.L.) GW-damping test."}
+    ]
+  },
+  j1906:{
+    tag:"Pulsar laboratory · 2004",
+    title:"PSR J1906+0746",
+    sub:"Young, non-recycled pulsar in DNS",
+    params:[["Spin period","144 ms"],["Orbital period","4.0 h"],["Eccentricity","0.085"],["Spin misalignment","104° ± 9°"]],
+    sections:[
+      {h:"What it is",p:"A young, non-recycled pulsar — most likely the second-formed neutron star — in a 4-hour orbit with another NS. Discovered with Arecibo. Three PK parameters (ω̇, γ, Ṗ_b) yield a 5% radiative test."},
+      {h:"What's special",p:"The pulsar's spin axis is dramatically misaligned (104°) with the orbital angular momentum. Crucially, both the main pulse and the interpulse are observed — a view of both magnetic poles. As geodetic precession reorients the spin, the polarisation pattern of both pulses changes in a characteristic way."},
+      {h:"The headline result",p:"Modelling the polarisation evolution yields the most precise pulsar test of geodetic precession ever achieved: 2.17°/yr ± 0.11°/yr vs. the GR prediction of 2.234°/yr ± 0.014°/yr. Excellent agreement."}
+    ]
+  },
+  j1757:{
+    tag:"Pulsar laboratory · 2018",
+    title:"PSR J1757−1854",
+    sub:"The most relativistic DNS in many respects",
+    params:[["Spin period","21.5 ms"],["Orbital period","4.4 h"],["Eccentricity","0.606"],["m_pulsar","1.34 M☉"],["m_companion","1.39 M☉"],["v_periastron","1060 km/s"]],
+    sections:[
+      {h:"Why it matters",p:"A 21.5 ms pulsar in a highly eccentric, compact DNS orbit. At periastron the two NSs come within 0.75 R_⊙ of each other, with relative velocity exceeding 1000 km/s — the largest known among binary pulsars. The orbital decay Ṗ_b is large enough that coalescence will occur in 76 Myr."},
+      {h:"What it tests",p:"Five PK parameters measured: ω̇, γ, Ṗ_b plus both orthometric Shapiro parameters h_3 and ς. All five agree on a common region of the mass–mass plane — GR has passed."},
+      {h:"What's pending",p:"The unknown distance currently limits the radiative test through extrinsic Galactic-acceleration uncertainty. A near-future detection of the relativistic angular deformation δ_θ — favoured by the high eccentricity — could provide a new constraint."}
+    ]
+  },
+  j0337:{
+    tag:"Pulsar laboratory · 2014",
+    title:"PSR J0337+1715",
+    sub:"Triple system: MSP + two white dwarfs",
+    params:[["Pulsar spin","2.7 ms"],["m_pulsar","1.44 M☉"],["Inner WD","0.20 M☉"],["Outer WD","0.41 M☉"],["Inner P_b","1.63 d"],["Outer P_b","327 d"]],
+    sections:[
+      {h:"Why it's unique",p:"A millisecond pulsar in a hierarchical triple system with two white dwarfs. The pulsar and inner WD orbit each other in 1.63 days; this inner pair, together with the outer WD, orbits the system's centre of mass in 327 days. Both orbits have very low eccentricity. The only relativistic effect directly visible is the special-relativistic time dilation from the pulsar's epicyclic motion."},
+      {h:"The headline result",p:"The inner pulsar–WD pair falls in the gravitational field of the outer WD, accelerated at 0.17 cm/s² — comparable to the Earth–Moon system in the Sun's field. If the strongly self-gravitating pulsar fell differently from its weakly self-gravitating WD companion, the orbit would polarise. None is seen."},
+      {h:"The number",p:"|Δ_{p,0}| < 2.6×10⁻⁶ (95% C.L.) — three orders of magnitude better than any pulsar–WD-only test, and the most precise strong-field UFF test ever performed. Translates to a 95% lower limit on the Brans–Dicke parameter ω_BD > 150 000, far stronger than the Cassini Solar-System bound of ~40 000."}
+    ]
+  },
+  j1738:{
+    tag:"Pulsar laboratory · 2007",
+    title:"PSR J1738+0333",
+    sub:"MSP with bright Helium-WD companion",
+    params:[["Spin period","5.9 ms"],["Orbital period","8.5 h"],["Eccentricity","< 4×10⁻⁷"],["m_pulsar","1.47 M☉"],["m_companion","0.181 M☉"]],
+    sections:[
+      {h:"Why it matters",p:"Optically bright Helium-core WD companion. High-resolution spectroscopy yields the mass ratio R = 8.1 ± 0.2 and the WD mass independently. This breaks degeneracies that pulsar timing alone cannot resolve."},
+      {h:"What it tests",p:"The intrinsic orbital decay Ṗ_b^int = −26.1 ± 3.1 fs/s agrees with the GR prediction (−27.7 ± 1.5/1.9 fs/s) within uncertainties. The system's strong asymmetry in compactness between pulsar and WD makes this a powerful test."},
+      {h:"The constraint",p:"The agreement converts into one of the tightest known constraints on dipolar gravitational radiation predicted by alternative theories: |κ_D^(1/2) s_p| < 2×10⁻³ (95% confidence) for a 1.47 M☉ neutron star."}
+    ]
+  },
+  j2222:{
+    tag:"Pulsar laboratory · 2013",
+    title:"PSR J2222−0137",
+    sub:"Massive MSP with massive WD",
+    params:[["Spin period","32.8 ms"],["Orbital period","2.45 d"],["Eccentricity","3.8×10⁻⁴"],["m_pulsar","1.831 M☉"],["m_companion","1.319 M☉"],["Distance","268 ± 1 pc"]],
+    sections:[
+      {h:"Why it matters",p:"A heavy pulsar–massive-WD binary. Despite its low eccentricity, the relativistic advance of periastron is precisely measured: ω̇ = 0.09605° ± 0.00048°/yr. Three PK parameters give a ~1% confirmation of GR."},
+      {h:"What's special",p:"The most precise VLBI distance ever obtained for any pulsar (268 ± 1 pc). This permits accurate correction for the Shklovskii effect, yielding a clean orbital-decay measurement at 2σ even with such a long orbital period."},
+      {h:"Why it's important for theory",p:"The large pulsar mass (1.83 M☉) is a key piece for closing the spontaneous-scalarisation mass gap in DEF gravity — a non-linear scalar–tensor regime where strong-field deviations from GR could appear in massive NSs."}
+    ]
+  },
+  j1909:{
+    tag:"Pulsar laboratory · 2003",
+    title:"PSR J1909−3744",
+    sub:"Best-timed MSP–WD pulsar",
+    params:[["Spin period","2.9 ms"],["Orbital period","1.53 d"],["Inclination","86.4° / 93.6°"],["m_pulsar","1.492 ± 0.014 M☉"],["m_companion","0.209 ± 0.001 M☉"]],
+    sections:[
+      {h:"Why it matters",p:"One of the most precise pulsar timers known. Near-edge-on geometry yields exquisite Shapiro range and shape measurements. The companion is an optically bright low-mass Helium WD that allows independent radial-velocity measurement, providing the system's 3D velocity relative to the Solar System."},
+      {h:"What it tests",p:"The most stringent limit on the preferred-frame parameter α̂₁: |α̂₁| < 2.1×10⁻⁵ (95% C.L.) — better than the LLR Solar-System bound, and additionally probing strong-field strong-curvature effects intrinsic to the pulsar."},
+      {h:"Side benefits",p:"The Shapiro-delay-derived WD mass is so precise that it calibrates the WD models used to extract masses in other systems (like J1738+0333). PSR J1909−3744 is also a backbone pulsar for all PTAs and the search for the nano-Hz GW background."}
+    ]
+  }
+};
+
+const PERSON_DATA = {
+  bell:{
+    tag:"Discoverer · Observer · 1967",
+    title:"Jocelyn Bell Burnell",
+    sub:"University of Cambridge",
+    sections:[
+      {h:"What she did",p:"While a graduate student at the Cavendish Laboratory operating the Interplanetary Scintillation Array at 81.5 MHz, she noticed an extraordinarily stable 1.337 s periodic signal returning sidereally — like a star — within the telescope beam. The signal turned out to be from CP 1919, the first known radio pulsar."},
+      {h:"Why it mattered",p:"The discovery was a complete surprise — no one had predicted radio emission from neutron stars. It established beyond doubt the existence of these compact remnants and inaugurated the entire field of pulsar astronomy, on which everything in this review is built."},
+      {h:"Recognition",p:"The 1974 Nobel Prize for the discovery went to her supervisor Antony Hewish — a controversial omission still debated. In 2018 she was awarded the Special Breakthrough Prize for the discovery."}
+    ]
+  },
+  hulsetaylor:{
+    tag:"Discoverers · 1974",
+    title:"Russell Hulse & Joseph Taylor",
+    sub:"Arecibo Observatory · University of Massachusetts",
+    sections:[
+      {h:"What they did",p:"Discovered PSR B1913+16 in summer 1974 in a survey using the Arecibo 305-m telescope. Recognising it as a binary pulsar (orbital period 7.75 h) opened a wholly new chapter of experimental gravity."},
+      {h:"What followed",p:"Long-term timing of B1913+16 over the following decades produced three precise post-Keplerian parameters whose agreement with GR provided the first compelling evidence for the existence of gravitational waves — through the orbital decay caused by GW emission."},
+      {h:"Recognition",p:"Hulse and Taylor shared the 1993 Nobel Prize in Physics for the discovery and the gravitational-wave evidence. The discovery directly motivated the construction of LIGO."}
+    ]
+  },
+  damour:{
+    tag:"Theorists · 1985–1986",
+    title:"Thibault Damour & Nathalie Deruelle",
+    sub:"IHÉS · IAP",
+    sections:[
+      {h:"What they did",p:"Developed the analytical, quasi-Keplerian solution to the first post-Newtonian equations of motion of a binary system in harmonic coordinates (1985), and the corresponding post-Keplerian timing formula (1986) — known universally as DD86."},
+      {h:"Why it matters",p:"DD86 is the framework underlying virtually every modern binary-pulsar gravity test. Its critical feature: the post-Keplerian parameters are theory-independent observables that can be measured without assuming GR is correct, then compared against the predictions of any candidate theory."},
+      {h:"Beyond DD86",p:"Damour subsequently formulated the effacement principle, the multi-scalar–tensor framework, and (with Esposito-Farèse) DEF gravity — the alternative theory most extensively tested with pulsars."}
+    ]
+  },
+  ef:{
+    tag:"Theorist · 1992 onward",
+    title:"Gilles Esposito-Farèse",
+    sub:"IAP · Sorbonne Université",
+    sections:[
+      {h:"What he did",p:"Co-developed Damour–Esposito-Farèse gravity (1992–1996) — a two-parameter class of mono-scalar–tensor theories that exhibits a striking phenomenon called <em>spontaneous scalarisation</em>: even when the theory is arbitrarily close to GR in weak fields, neutron stars can acquire a strong scalar charge."},
+      {h:"Why pulsars test this",p:"Spontaneously scalarised neutron stars predict large dipolar gravitational radiation in asymmetric binaries. Pulsar–WD timing yields direct constraints on the DEF parameter space (α₀, β₀) — and a combination of binaries with different masses now closes nearly all of the spontaneous-scalarisation window."},
+      {h:"The framework",p:"DEF gravity has become the canonical 'theory-space' against which pulsar gravity tests are interpreted. The mass–mass diagrams and dipolar-radiation limits in this review are constraints on its (α₀, β₀) plane."}
+    ]
+  },
+  nordtvedt:{
+    tag:"Theorist · 1968 onward",
+    title:"Kenneth Nordtvedt",
+    sub:"Montana State University",
+    sections:[
+      {h:"What he did",p:"Identified what is now called the Nordtvedt effect (1968): a violation of the universality of free fall for self-gravitating bodies, predicted by many alternatives to GR. He proposed testing it with Lunar Laser Ranging — comparing the free-fall accelerations of Earth and Moon in the Sun's field."},
+      {h:"Pulsar adaptation",p:"He later proposed strong-field generalisations and pointed out that fast-spinning solitary millisecond pulsars could test some of the most stringent limits on preferred-location and preferred-frame parameters via the alignment (or lack thereof) of their spin axes — a programme since carried out with PSR B1937+21 and J1744−1134."},
+      {h:"Legacy",p:"Many of the limits on PPN parameters in this review (ξ̂, α̂₂) are obtained via Nordtvedt's strong-field reasoning."}
+    ]
+  },
+  wolszczan:{
+    tag:"Observer · 1990",
+    title:"Aleksander Wolszczan",
+    sub:"Arecibo Observatory",
+    sections:[
+      {h:"What he did",p:"Discovered PSR B1534+12 — the second highly relativistic double-neutron-star binary, providing an independent confirmation of the validity of GR in the strong-field regime."},
+      {h:"What was special",p:"B1534+12 is seen nearly edge-on (i = 77.2°) and yielded the first precision Shapiro-delay measurement in the gravitational field of a strongly self-gravitating mass — a fundamentally different test from those previously possible only with planetary radar in the Solar System."},
+      {h:"Beyond pulsars",p:"Wolszczan also discovered the first confirmed exoplanets (orbiting PSR B1257+12) — the first planetary system known beyond our own."}
+    ]
+  },
+  burgay:{
+    tag:"Observer · 2003",
+    title:"Marta Burgay",
+    sub:"Parkes Observatory · INAF Cagliari",
+    sections:[
+      {h:"What she did",p:"Lead author on the 2003 discovery of PSR J0737−3039A — found in a survey of the Galactic anticenter at the Parkes telescope. Initially identified only as the recycled member of what would soon become a Double Pulsar."},
+      {h:"What followed",p:"Within months Andrew Lyne and collaborators discovered that the companion was also a pulsar (PSR J0737−3039B). The Double Pulsar is now the most precise gravity laboratory ever discovered — its analysis required the development of next-to-leading-order corrections to the post-Keplerian formalism."},
+      {h:"Today",p:"She continues to work at INAF (Italy) on pulsar searches and binary-pulsar timing, including the SKA-precursor projects."}
+    ]
+  },
+  kramer:{
+    tag:"Observer · Theorist · 2006–present",
+    title:"Michael Kramer",
+    sub:"MPIfR Bonn · Director",
+    sections:[
+      {h:"What he does",p:"Director of the Max-Planck-Institut für Radioastronomie in Bonn. Leads the long-term timing analyses of the Double Pulsar that have produced the most precise strong-field gravity tests ever performed."},
+      {h:"The 2006 and 2021 papers",p:"Kramer et al. (2006, Science) reported the first multi-PK-parameter test in the Double Pulsar system. Kramer et al. (2021, Phys. Rev. X) updated this with 16 years of data, including six PK parameters, NLO corrections, and the deflection of light by pulsar B — confirming GR at relative precision 6.3×10⁻⁵."},
+      {h:"PTAs and beyond",p:"Active in the European PTA, MeerTIME, and SKA-pulsar science. Many of the future prospects discussed in this review depend on programmes he leads."}
+    ]
+  },
+  freirewex:{
+    tag:"Authors of this review · MPIfR Bonn",
+    title:"Paulo Freire & Norbert Wex",
+    sub:"Max-Planck-Institut für Radioastronomie",
+    sections:[
+      {h:"What they do",p:"Co-authors of the 2024 Living Review in Relativity that this site is based on. Both work at MPIfR and have led many of the most important pulsar–white-dwarf gravity tests of the last two decades."},
+      {h:"Key contributions",p:"Freire's work on globular-cluster pulsars and PSR J1738+0333 produced some of the strongest constraints on dipolar GW emission. Wex's work on preferred-frame and preferred-location effects with solitary MSPs and on the strong-field generalisations of PPN parameters defines a substantial portion of the field."},
+      {h:"Recent leadership",p:"They co-led the analyses of PSR J2222−0137 and the DEF-gravity constraints from PSR J0337+1715 (with Voisin et al.) — the work that closed nearly all of the spontaneous-scalarisation parameter space."}
+    ]
+  },
+  ransom:{
+    tag:"Observer · 2014",
+    title:"Scott Ransom",
+    sub:"NRAO Charlottesville · Green Bank",
+    sections:[
+      {h:"What he did",p:"Led the discovery and characterisation of PSR J0337+1715 — a 2.7 ms pulsar in a hierarchical triple system with two white dwarfs. Reported in Nature in 2014."},
+      {h:"Why it matters",p:"The triple system was immediately recognised as a unique laboratory: the inner pulsar–WD pair falls in the gravitational field of the outer WD with an acceleration comparable to the Earth–Moon in the Sun's field. This enabled the most precise strong-field UFF test ever performed: |Δ_{p,0}| < 2.6×10⁻⁶."},
+      {h:"Continuing work",p:"Continues to lead pulsar searches and timing programmes at NRAO, including searches for relativistic binaries with the Green Bank Telescope."}
+    ]
+  },
+  stairs:{
+    tag:"Observer · Reviewer · 2003 onward",
+    title:"Ingrid Stairs",
+    sub:"University of British Columbia",
+    sections:[
+      {h:"What she did",p:"Author of the 2003 Living Review in Relativity on testing GR with pulsar timing — the predecessor of the present review. Co-discoverer and timing analyst on many of the relativistic DNS systems described here, including PSR B1534+12 and J1906+0746."},
+      {h:"Recent work",p:"Lead the timing analysis of PSR J1906+0746 yielding the most precise pulsar test of geodetic precession (2.17°/yr ± 0.11°/yr), and contributed to many of the equivalence-principle and dipolar-radiation tests with pulsar–WD systems."}
+    ]
+  },
+  einstein:{
+    tag:"Theorist · 1915",
+    title:"Albert Einstein",
+    sub:"The theory under test",
+    sections:[
+      {h:"What he did",p:"Formulated General Relativity, completed in 1915 with the publication of the field equations. The theory describes gravity as the curvature of spacetime caused by mass and energy."},
+      {h:"What pulsars do",p:"Every test described in this review is, ultimately, an attempt to find GR's first observational failure. Pulsars provide the strongest tests of strong-field GR ever performed — including the first evidence for gravitational waves (Hulse–Taylor) and the most precise quadrupole-formula test (Double Pulsar)."},
+      {h:"The verdict",p:"Fifty years and counting: General Relativity has passed every pulsar test ever performed, in regimes spanning post-Newtonian to fully strong-field, with relative precision now reaching parts in 10⁵."}
+    ]
+  }
+};
+
+// ======= MODAL CONTROLS =======
+const overlay = document.getElementById('modal-overlay');
+const modalBody = document.getElementById('modal-body');
+function buildModalHTML(d){
+  let html = `<div class="modal-tag">${d.tag}</div>`;
+  html += `<h3>${d.title}</h3>`;
+  if(d.sub) html += `<div class="modal-sub">${d.sub}</div>`;
+  if(d.params && d.params.length){
+    html += `<div class="params-grid">`;
+    d.params.forEach(([l,v])=>{ html += `<div class="param"><div class="param-label">${l}</div><div class="param-value">${v}</div></div>`; });
+    html += `</div>`;
+  }
+  d.sections.forEach(s=>{
+    html += `<h4>${s.h}</h4><p>${s.p}</p>`;
+  });
+  return html;
+}
+function openModal(data){
+  if(!data) return;
+  modalBody.innerHTML = buildModalHTML(data);
+  overlay.classList.add('open');
+  overlay.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  // scroll modal to top
+  document.getElementById('modal-content').scrollTop = 0;
+}
+function closeModal(){
+  overlay.classList.remove('open');
+  overlay.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+}
+document.getElementById('modal-close').addEventListener('click', closeModal);
+overlay.addEventListener('click',(e)=>{ if(e.target===overlay) closeModal(); });
+document.addEventListener('keydown',(e)=>{ if(e.key==='Escape') closeModal(); });
+
+// Bind clickables
+document.querySelectorAll('.test-card[data-pulsar]').forEach(card=>{
+  card.addEventListener('click',()=>openModal(PULSAR_DATA[card.dataset.pulsar]));
+});
+document.querySelectorAll('.person-card[data-person]').forEach(card=>{
+  card.addEventListener('click',()=>openModal(PERSON_DATA[card.dataset.person]));
+});
+
+// ======= NANOGRAV SLIDE DECK =======
+// Replace the URLs below with your Cloudinary uploads (or any public host).
+// Captions are short titles for each slide; they appear under thumbnails and in the lightbox.
+const SLIDE_DECK = [
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-01.jpg', caption:'The cosmic echo · 15 years of NANOGrav'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-02.jpg', caption:'One dataset, three frontiers'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-03.jpg', caption:'The galaxy as a detector — the Pulsar Timing Array'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-04.jpg', caption:'The probabilistic leap · separating noise from signal'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-05.jpg', caption:"Einstein's signature · the Hellings–Downs curve"},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-06.jpg', caption:'Hypothesis 1 · the supermassive black-hole waltz'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-07.jpg', caption:'Hypothesis 2 · Big Bang echo and massive gravity'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-08.jpg', caption:'The thermonuclear conflict · the BBN limit'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-09.jpg', caption:'Origins matrix · astrophysics vs. cosmology'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-10.jpg', caption:"The structural anomaly · beyond Einstein's gravity?"},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-11.jpg', caption:'Anatomy of spatial deformation · TT, ST, VL, SL'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-12.jpg', caption:'The ST controversy · the statistical tie'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-13.jpg', caption:'The hybrid model · the prevalence of α'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-14.jpg', caption:'Polarisation diagnostic matrix · 15 years'},
+  {url:'https://res.cloudinary.com/dpbjs58ci/image/upload/q_auto/f_auto/slide-15.jpg', caption:'The interpretation tree · the future of the GWB'}
+];
+
+// Build thumbnails
+const deckGrid = document.getElementById('deck-grid');
+SLIDE_DECK.forEach((s,i)=>{
+  const card = document.createElement('div');
+  card.className = 'slide-card';
+  card.dataset.idx = i;
+  card.innerHTML = `
+    <div class="slide-card-num">${String(i+1).padStart(2,'0')} / ${String(SLIDE_DECK.length).padStart(2,'0')}</div>
+    <img src="${s.url}" alt="${s.caption}" loading="lazy">
+    <div class="slide-card-caption">${s.caption}</div>`;
+  deckGrid.appendChild(card);
+});
+
+// Lightbox logic
+const lb = document.getElementById('deck-lightbox');
+const lbImg = document.getElementById('deck-lightbox-img');
+const lbInfo = document.getElementById('deck-lightbox-info');
+let lbIdx = 0;
+function openLB(i){
+  lbIdx = i;
+  const s = SLIDE_DECK[lbIdx];
+  lbImg.src = s.url;
+  lbImg.alt = s.caption;
+  lbInfo.innerHTML = `<strong>${String(lbIdx+1).padStart(2,'0')} / ${String(SLIDE_DECK.length).padStart(2,'0')}</strong> ${s.caption}`;
+  lb.classList.add('open');
+  lb.setAttribute('aria-hidden','false');
+  document.body.style.overflow = 'hidden';
+}
+function closeLB(){
+  lb.classList.remove('open');
+  lb.setAttribute('aria-hidden','true');
+  document.body.style.overflow = '';
+}
+function nextLB(){ openLB((lbIdx+1) % SLIDE_DECK.length); }
+function prevLB(){ openLB((lbIdx-1+SLIDE_DECK.length) % SLIDE_DECK.length); }
+
+document.querySelectorAll('.slide-card').forEach(card=>{
+  card.addEventListener('click',()=>openLB(parseInt(card.dataset.idx,10)));
+});
+document.getElementById('deck-close').addEventListener('click', closeLB);
+document.getElementById('deck-next').addEventListener('click', nextLB);
+document.getElementById('deck-prev').addEventListener('click', prevLB);
+lb.addEventListener('click',(e)=>{ if(e.target===lb) closeLB(); });
+document.addEventListener('keydown',(e)=>{
+  if(!lb.classList.contains('open')) return;
+  if(e.key==='Escape') closeLB();
+  else if(e.key==='ArrowRight') nextLB();
+  else if(e.key==='ArrowLeft') prevLB();
+});
+</script>
+
+</body>
+</html>
